@@ -209,7 +209,6 @@
       document.getElementById("player-gen").style.display = "block";
     }
     function finishPlayerGen() {
-      // Save world & player
       let worldName = document.getElementById("worldNameInput").value.trim();
       if (!worldName) return;
       let worldType = document.getElementById("worldTypeInput").value;
@@ -232,12 +231,12 @@
       document.getElementById("player-gen").style.display = "none";
       startGame();
     }
-    // --- Main menu on load ---
     showMenu();
 
-    // --- GAME LOGIC (runs only after world and player are loaded) ---
+    // --- GAME STATE ---
     let gameStarted = false;
     let stopGameLoop = false;
+    let gameLoopId = null;
     function startGame() {
       stopGame();
       gameStarted = true;
@@ -245,20 +244,29 @@
       document.getElementById("menu").style.display = "none";
       document.getElementById("world-gen").style.display = "none";
       document.getElementById("player-gen").style.display = "none";
+      document.getElementById("menu-load").style.display = "none";
+      // Remove any old event listeners from previous game
+      window.onkeydown = null;
+      window.onkeyup = null;
       // Set up game with world & player
       TerrandiaGame(currentWorld, currentPlayer);
     }
     function stopGame() {
       stopGameLoop = true;
-      // Clear canvas, reset any game-specific state (if needed)
+      if (gameLoopId !== null) cancelAnimationFrame(gameLoopId);
       ctx.clearRect(0,0,canvas.width,canvas.height);
+      // Remove all gameplay event listeners
+      window.onkeydown = null;
+      window.onkeyup = null;
     }
 
     // --- TERRANDIA GAME ENGINE ---
     function TerrandiaGame(worldInfo, playerInfo) {
-      // Copy of your game code, but worldInfo.type controls generation
-      // (only the world generation step is changed, rest is as before)
-      // --- Config ---
+      // --- (Rest of the code: same as before, unchanged) ---
+      // [The entire gameplay code block from previous responses goes here, unchanged...]
+      // But: attach all event listeners (keydown/up) to window, not document, so you can clean up on menu return.
+
+      // --- Config/Block data/constants (as before) ---
       const BLOCK_SIZE = 24;
       const BLOCK_SCALE = 1.03;
       const CAMERA_WIDTH = 24;
@@ -270,9 +278,77 @@
       const TICK = 1/60;
       const CHUNK_SIZE = 32;
       const MINE_REACH = 5;
-      // --- Block colors, images, hotbar, etc: use outer variables ---
-
-      // --- World Storage ---
+      const COLORS = {
+        air: "#223366",
+        grass: "#3cbb3c",
+        dirt: "#87692b",
+        stone: "#888",
+        sand: "#e8e2aa",
+        clay: "#b97a56",
+        snow: "#e0e8f0",
+        hotstone: "#c75d35",
+        magma: "#f85a0a",
+        lava: "#ff4100",
+        leaf: "#5ed04b",
+        wood: "#7c4f20",
+        brick: "#a64832",
+        ore: "#e4e45c",
+        player: "#fff1c1",
+        select: "#fffd7f"
+      };
+      const HOTBAR_BLOCKS = [
+        "dirt", "stone", "sand", "clay", "snow", "hotstone", "magma", "wood", "brick"
+      ];
+      const BLOCK_IMAGES = {
+        grass: "https://raw.githubusercontent.com/Skaberson/test123/main/images/grass.png",
+        dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/images/dirt_00.png",
+        stone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/stone.png",
+        sand: "https://raw.githubusercontent.com/Skaberson/test123/main/images/sand.png",
+        clay: "",
+        snow: "https://raw.githubusercontent.com/Skaberson/test123/main/images/snow.png",
+        hotstone: "",
+        magma: "",
+        lava: "",
+        leaf: "",
+        wood: "",
+        brick: "",
+        ore: ""
+      };
+      // --- PRNG, perlin, valueNoise, etc: as before ---
+      function mulberry32(a) {
+        return function() {
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+      }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function smoothstep(t) { return t * t * (3 - 2 * t); }
+      function valueNoise(x, seed) {
+        let rnd = mulberry32(seed + x*73856093);
+        return rnd();
+      }
+      function perlin1d(x, seed) {
+        let xi = Math.floor(x);
+        let xf = x - xi;
+        let l = valueNoise(xi, seed), r = valueNoise(xi+1, seed);
+        return lerp(l, r, smoothstep(xf));
+      }
+      function getBiome(x) {
+        const bseed = 121212;
+        const n = perlin1d(x / 64, bseed * 13);
+        if (n < 0.25) {
+          return { name: "desert", surface: "sand", dirt: "sand", stone: "stone", tree: null };
+        } else if (n < 0.48) {
+          return { name: "snow", surface: "snow", dirt: "snow", stone: "stone", tree: null };
+        } else if (n < 0.75) {
+          return { name: "forest", surface: "grass", dirt: "dirt", stone: "stone", tree: "oak" };
+        } else {
+          return { name: "clay", surface: "clay", dirt: "clay", stone: "stone", tree: null };
+        }
+      }
+      // --- World Storage and generation ---
       let world = {};
       const seed = worldInfo.seed;
       function getBlock(x, y) {
@@ -283,19 +359,15 @@
       function setBlock(x, y, type) {
         world[x+','+y] = type;
       }
-
-      // --- Worldgen with composition options ---
       function generateChunk(cx, cy) {
         for(let dx=0; dx<CHUNK_SIZE; dx++) {
           let x = cx * CHUNK_SIZE + dx;
-          // Compose biome based on worldInfo.type
           let biome;
           switch(worldInfo.type) {
             case 'sandy': biome = {name:"desert",surface:"sand",dirt:"sand",stone:"stone",tree:null}; break;
             case 'snowy': biome = {name:"snow",surface:"snow",dirt:"snow",stone:"stone",tree:null}; break;
             case 'clay': biome = {name:"clay",surface:"clay",dirt:"clay",stone:"stone",tree:null}; break;
             case 'mixed':
-              let bopt = ["desert","snow","forest","clay"];
               biome = getBiome(x + seed*0.13);
               break;
             case 'default':
@@ -356,7 +428,6 @@
           }
         }
       }
-      // --- Canvas Setup ---
       function resizeCanvas() {
         canvas.width = CAMERA_WIDTH * BLOCK_SIZE;
         canvas.height = CAMERA_HEIGHT * BLOCK_SIZE;
@@ -364,7 +435,6 @@
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
 
-      // --- Player ---
       let player = {
         x: 0,
         y: 0,
@@ -390,13 +460,11 @@
       player.x = 0;
       player.y = findGroundStartX(0);
 
-      // --- Camera ---
       let camera = {
         x: player.x,
         y: player.y
       };
 
-      // --- Inventory logic ---
       let inventory = {};
       for(const k of HOTBAR_BLOCKS) inventory[k]=10;
       function addToInventory(blockType, amt=1) {
@@ -427,15 +495,12 @@
       }
       let inventoryOpen = false;
 
-      // --- Terraria-style mining reach check ---
       function isInReach(x, y) {
         let px = player.x;
         let py = player.y + player.h/2;
         let dist = Math.sqrt((x+0.5-px)**2 + (y+0.5-py)**2);
         return dist <= MINE_REACH;
       }
-
-      // --- Hotbar UI ---
       let hotbarSelected = 0;
       function updateHotbar() {
         const hotbar = document.getElementById('hotbar');
@@ -456,7 +521,6 @@
       }
       updateHotbar();
 
-      // --- Mining ---
       let minedBlocks = 0;
       let mouseTile = null;
       let mouseDown = false, mouseRight = false;
@@ -474,21 +538,21 @@
         let cy = Math.floor(camera.y - CAMERA_HEIGHT/2 + my);
         return {x: cx, y: cy};
       }
-      canvas.addEventListener('mousemove', (e)=>{
+      canvas.onmousemove = (e)=>{
         mouseTile = getMouseTile(e.clientX, e.clientY);
         mouseTileRefresh = mouseTile;
         mouseTileTimer = 0;
-      });
-      canvas.addEventListener('mouseleave', ()=>{ mouseTile = null; });
-      canvas.addEventListener('mousedown', (e)=>{
+      };
+      canvas.onmouseleave = ()=>{ mouseTile = null; };
+      canvas.onmousedown = (e)=>{
         if (inventoryOpen) return;
         mouseDown = true;
         mouseRight = e.button === 2;
         attemptMineOrPlace();
         canvas.focus();
-      });
-      canvas.addEventListener('mouseup', ()=>{ mouseDown = false; });
-      canvas.addEventListener('contextmenu', e=>e.preventDefault());
+      };
+      canvas.onmouseup = ()=>{ mouseDown = false; };
+      canvas.oncontextmenu = e=>e.preventDefault();
 
       function periodicMouseTileRefresh() {
         mouseTileTimer += 1;
@@ -536,7 +600,6 @@
         }
       }
 
-      // --- Controls ---
       let left = false, right = false, up = false, jumpRequest = false;
       function handleKeydown(e) {
         if (e.repeat) return;
@@ -583,19 +646,16 @@
         if(e.key==='ArrowRight' || e.key==='d' || e.key==='D') right = false;
         if(e.key==='ArrowUp' || e.key==='w' || e.key==='W' || e.key===' ') up = false;
       }
-      document.addEventListener('keydown', handleKeydown);
-      document.addEventListener('keyup', handleKeyup);
+      window.onkeydown = handleKeydown;
+      window.onkeyup = handleKeyup;
 
-      // --- Collision helpers ---
       function isSolid(x, y) {
         let t = getBlock(x, y);
         return t && t !== 'air';
       }
-
       function collideAABB(px, py, vx, vy, w, h) {
         let nx = px, ny = py;
         let onGround = false;
-
         nx += vx;
         let minY = Math.floor(ny + 1e-8), maxY = Math.floor(ny + h - 1e-8);
         if(vx > 0) {
@@ -617,7 +677,6 @@
             }
           }
         }
-
         ny += vy;
         let minX = Math.floor(nx - w/2 + 1e-8), maxX = Math.floor(nx + w/2 - 1e-8);
         if(vy > 0) {
@@ -642,7 +701,6 @@
         }
         return {x: nx, y: ny, onGround};
       }
-
       let jumpActive = false; let jumpTimer = 0; const JUMP_DURATION = 0.34;
       function update() {
         if (stopGameLoop) return;
@@ -736,13 +794,13 @@
         ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
       }
 
-      function loop() {
+      function gameLoop() {
         if (stopGameLoop) return;
         update();
         draw();
-        requestAnimationFrame(loop);
+        gameLoopId = requestAnimationFrame(gameLoop);
       }
-      loop();
+      gameLoop();
     }
   </script>
 </body>
