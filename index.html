@@ -164,7 +164,7 @@
 
     // --- Infinite World Storage ---
     let world = {};
-    const seed = 12345;
+    const seed = 93821;
     function getBlock(x, y) {
       const key = x + "," + y;
       if(world.hasOwnProperty(key)) return world[key];
@@ -176,7 +176,7 @@
 
     // --- Terraria-style cave generation: more common, but not right under surface ---
     function cave2D(x, y, biome, surf) {
-      if (y <= surf + 5) return false; // Never above y = surface+5
+      if (y <= surf + 70) return false; // Never above y = surface+5
       let caveNoise = perlin1d(x/8 + y/16, 777+biome.name.length)*0.6
                     + perlin1d(x/18 - y/25, 888-biome.name.length)*0.4;
       let tunnelNoise = perlin1d(x/13 + y/45, 999)*0.7
