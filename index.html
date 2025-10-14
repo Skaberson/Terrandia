@@ -251,6 +251,9 @@
     // --- Canvas Setup ---
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+
     function resizeCanvas() {
       canvas.width = CAMERA_WIDTH * BLOCK_SIZE;
       canvas.height = CAMERA_HEIGHT * BLOCK_SIZE;
@@ -661,3 +664,7 @@
   </script>
 </body>
 </html>
+
+
+
+
