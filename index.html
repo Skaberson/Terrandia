@@ -155,7 +155,7 @@
 
     // --- Biomes ---
     function getBiome(x) {
-      const bseed = 121212;
+      const bseed = 234567;
       const n = perlin1d(x / 64, bseed * 13);
       if (n < 0.25) {
         return { name: "desert", surface: "sand", dirt: "sand", stone: "stone", tree: null };
@@ -171,7 +171,7 @@
 
     // --- Infinite World Storage ---
     let world = {};
-    const seed = 80085;
+    const seed = 53758;
     function getBlock(x, y) {
       const key = x + "," + y;
       if(world.hasOwnProperty(key)) return world[key];
