@@ -67,6 +67,7 @@
     const CHUNK_SIZE = 32;
     const MINE_REACH = 5;
 
+
     // --- Block colors (fallback) ---
     const COLORS = {
       air: "#223366",
@@ -87,10 +88,12 @@
       select: "#fffd7f"
     };
 
+
     // The order & allowed block types for the hotbar.
     const HOTBAR_BLOCKS = [
       "dirt", "stone", "sand", "clay", "snow", "hotstone", "magma", "wood", "brick"
     ];
+
 
     // --- Block images (edit these for custom textures!) ---
     const BLOCK_IMAGES = {
@@ -98,7 +101,7 @@
       dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/images/dirt_00.png",
       stone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/stone.png",
       sand: "https://raw.githubusercontent.com/Skaberson/test123/main/images/sand.png",
-      clay: "",
+      clay: "https://raw.githubusercontent.com/Skaberson/test123/main/images/clay.png",
       snow: "https://raw.githubusercontent.com/Skaberson/test123/main/images/snow.png",
       hotstone: "",
       magma: "",
@@ -108,6 +111,7 @@
       brick: "",
       ore: ""
     };
+
 
     // --- Preload images and track status ---
     const imageCache = {};
@@ -124,6 +128,7 @@
         img.onerror = () => { imageCache[type].error = true; };
       }
     }
+
 
     // --- PRNG and Noise ---
     function mulberry32(a) {
@@ -147,6 +152,7 @@
       return lerp(l, r, smoothstep(xf));
     }
 
+
     // --- Biomes ---
     function getBiome(x) {
       const bseed = 121212;
@@ -162,6 +168,7 @@
       }
     }
 
+
     // --- Infinite World Storage ---
     let world = {};
     const seed = 80085;
@@ -173,6 +180,7 @@
     function setBlock(x, y, type) {
       world[x+','+y] = type;
     }
+
 
     // --- Terraria-style cave generation: more common, but not right under surface ---
     function cave2D(x, y, biome, surf) {
@@ -186,6 +194,7 @@
       let tunnelProb = 0.85 + Math.min(0.12, depth/200);
       return (caveNoise > caveProb) || (tunnelNoise > tunnelProb);
     }
+
 
     function generateChunk(cx, cy) {
       for(let dx=0; dx<CHUNK_SIZE; dx++) {
@@ -214,7 +223,7 @@
               if (sy === 0) setBlock(wx, wy, "brick");
               else if (sy === 3) setBlock(wx, wy, "leaf");
               else if (sx === -2 || sx === 2) setBlock(wx, wy, "wood");
-              else setBlock(wx, wy, "air");
+              else setBlock(wx, wy, "air"); 
             }
             setBlock(x, y-1, "air");
           }
@@ -228,6 +237,7 @@
         }
       }
     }
+
 
     function ensureWorldGenerated(camX, camY) {
       let left = Math.floor(camX - CAMERA_WIDTH/2);
@@ -248,18 +258,39 @@
       }
     }
 
+
     // --- Canvas Setup ---
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 
-    function resizeCanvas() {
-      canvas.width = CAMERA_WIDTH * BLOCK_SIZE;
-      canvas.height = CAMERA_HEIGHT * BLOCK_SIZE;
-    }
+function resizeCanvas() {
+  const DPR = window.devicePixelRatio || 1;
+
+
+  const minWidthScale  = Math.floor(window.innerWidth  / (CAMERA_WIDTH  * BLOCK_SIZE)) || 1;
+  const minHeightScale = Math.floor(window.innerHeight / (CAMERA_HEIGHT * BLOCK_SIZE)) || 1;
+  RENDER_SCALE = Math.max(1, Math.min(minWidthScale, minHeightScale));
+
+
+  const cssWidth  = CAMERA_WIDTH  * BLOCK_SIZE * RENDER_SCALE;
+  const cssHeight = CAMERA_HEIGHT * BLOCK_SIZE * RENDER_SCALE;
+
+
+  canvas.style.width  = cssWidth + "px";
+  canvas.style.height = cssHeight + "px";
+  canvas.width  = Math.floor(cssWidth * DPR);
+  canvas.height = Math.floor(cssHeight * DPR);
+
+
+  ctx.setTransform(DPR * RENDER_SCALE, 0, 0, DPR * RENDER_SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingQuality = "low";
+}
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+
 
     // --- Player ---
     let player = {
@@ -272,6 +303,7 @@ ctx.imageSmoothingEnabled = false;
       canJump: true,
       miningCooldown: 0
     };
+
 
     function findGroundStartX(x) {
       for(let y=-CAMERA_HEIGHT; y<100; y++) {
@@ -288,11 +320,13 @@ ctx.imageSmoothingEnabled = false;
     player.x = 0;
     player.y = findGroundStartX(0);
 
+
     // --- Camera ---
     let camera = {
       x: player.x,
       y: player.y
     };
+
 
     // --- Inventory logic ---
     let inventory = {};
@@ -325,6 +359,7 @@ ctx.imageSmoothingEnabled = false;
     }
     let inventoryOpen = false;
 
+
     // --- Terraria-style mining reach check ---
     function isInReach(x, y) {
       let px = player.x;
@@ -332,6 +367,7 @@ ctx.imageSmoothingEnabled = false;
       let dist = Math.sqrt((x+0.5-px)**2 + (y+0.5-py)**2);
       return dist <= MINE_REACH;
     }
+
 
     // --- Hotbar UI ---
     let hotbarSelected = 0;
@@ -354,6 +390,7 @@ ctx.imageSmoothingEnabled = false;
     }
     updateHotbar();
 
+
     // --- Mining ---
     let minedBlocks = 0;
     let mouseTile = null;
@@ -362,16 +399,17 @@ ctx.imageSmoothingEnabled = false;
     let mouseTileLast = {x: 0, y: 0};
     let mouseTileTimer = 0;
 
-    function getMouseTile(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      let scaleX = canvas.width / rect.width;
-      let scaleY = canvas.height / rect.height;
-      let mx = Math.floor((clientX - rect.left) * scaleX / BLOCK_SIZE);
-      let my = Math.floor((clientY - rect.top) * scaleY / BLOCK_SIZE);
-      let cx = Math.floor(camera.x - CAMERA_WIDTH/2 + mx);
-      let cy = Math.floor(camera.y - CAMERA_HEIGHT/2 + my);
-      return {x: cx, y: cy};
-    }
+
+   function getMouseTile(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const mx_css = clientX - rect.left;
+  const my_css = clientY - rect.top;
+  const mx = Math.floor(mx_css / (BLOCK_SIZE * RENDER_SCALE));
+  const my = Math.floor(my_css / (BLOCK_SIZE * RENDER_SCALE));
+  const cx = Math.floor(camera.x - CAMERA_WIDTH / 2 + mx);
+  const cy = Math.floor(camera.y - CAMERA_HEIGHT / 2 + my);
+  return { x: cx, y: cy };
+}
     canvas.addEventListener('mousemove', (e)=>{
       mouseTile = getMouseTile(e.clientX, e.clientY);
       mouseTileRefresh = mouseTile;
@@ -388,6 +426,7 @@ ctx.imageSmoothingEnabled = false;
     canvas.addEventListener('mouseup', ()=>{ mouseDown = false; });
     canvas.addEventListener('contextmenu', e=>e.preventDefault());
 
+
     function periodicMouseTileRefresh() {
       mouseTileTimer += 1;
       if (mouseTile && (mouseTile.x !== mouseTileLast.x || mouseTile.y !== mouseTileLast.y)) {
@@ -402,6 +441,7 @@ ctx.imageSmoothingEnabled = false;
         mouseTileTimer = 0;
       }
     }
+
 
     function attemptMineOrPlace() {
       if(!mouseTileRefresh) return;
@@ -434,6 +474,7 @@ ctx.imageSmoothingEnabled = false;
         }
       }
     }
+
 
     // --- Controls ---
     let left = false, right = false, up = false, jumpRequest = false;
@@ -483,16 +524,19 @@ ctx.imageSmoothingEnabled = false;
     document.addEventListener('keydown', handleKeydown);
     document.addEventListener('keyup', handleKeyup);
 
+
     // --- Collision helpers ---
     function isSolid(x, y) {
       let t = getBlock(x, y);
       return t && t !== 'air';
     }
 
+
     // --- Terraria-style AABB collision (X then Y, flush with all blocks, matches draw) ---
     function collideAABB(px, py, vx, vy, w, h) {
       let nx = px, ny = py;
       let onGround = false;
+
 
       // Move X
       nx += vx;
@@ -516,6 +560,7 @@ ctx.imageSmoothingEnabled = false;
           }
         }
       }
+
 
       // Move Y
       ny += vy;
@@ -541,27 +586,33 @@ ctx.imageSmoothingEnabled = false;
         }
       }
 
+
       return {x: nx, y: ny, onGround};
     }
+
 
     // --- Jump Physics (Smooth, always consistent height) ---
     let jumpActive = false;
     let jumpTimer = 0;
     const JUMP_DURATION = 0.34;
 
+
     function update() {
       ensureWorldGenerated(camera.x, camera.y);
+
 
       let targetVx = 0;
       if(left) targetVx -= MOVE_SPEED;
       if(right) targetVx += MOVE_SPEED;
       player.vx += (targetVx - player.vx) * 0.25;
 
+
       if(jumpRequest && player.onGround && !jumpActive) {
         jumpActive = true;
         jumpTimer = 0;
       }
       jumpRequest = false;
+
 
       let vy = player.vy;
       if(jumpActive) {
@@ -576,10 +627,12 @@ ctx.imageSmoothingEnabled = false;
         vy += GRAVITY;
       }
 
+
       let move = collideAABB(player.x, player.y, player.vx*TICK, vy*TICK, player.w, player.h);
       player.x = move.x;
       player.y = move.y;
       player.onGround = move.onGround;
+
 
       if(player.onGround) {
         player.vy = 0;
@@ -588,7 +641,9 @@ ctx.imageSmoothingEnabled = false;
         player.vy = vy;
       }
 
+
       player.y = Math.max(-CAMERA_HEIGHT, player.y);
+
 
       // Camera follows player smoothly (lerp)
       let camTargetX = player.x;
@@ -596,19 +651,23 @@ ctx.imageSmoothingEnabled = false;
       camera.x += (camTargetX - camera.x) * 0.12;
       camera.y += (camTargetY - camera.y) * 0.12;
 
+
       if(!inventoryOpen && mouseDown && player.miningCooldown <= 0) {
         attemptMineOrPlace();
         player.miningCooldown = 0.12;
       }
       if(player.miningCooldown > 0) player.miningCooldown -= TICK;
 
+
       periodicMouseTileRefresh();
     }
+
 
     function draw() {
       let camX = camera.x - CAMERA_WIDTH/2;
       let camY = camera.y - CAMERA_HEIGHT/2;
       ctx.clearRect(0,0,canvas.width,canvas.height);
+
 
       // Draw world blocks, at exact world position (no offset bug!)
       let left = Math.floor(camX), top = Math.floor(camY);
@@ -635,6 +694,7 @@ ctx.imageSmoothingEnabled = false;
         }
       }
 
+
       // Draw mining/highlight box snapped perfectly to grid, always follows mouse
       if(mouseTileRefresh) {
         let inReach = isInReach(mouseTileRefresh.x, mouseTileRefresh.y);
@@ -644,6 +704,7 @@ ctx.imageSmoothingEnabled = false;
         ctx.lineWidth = 2;
         ctx.strokeRect(px, py, BLOCK_SIZE-2, BLOCK_SIZE-2);
       }
+
 
       // Draw player
       let sx = (player.x - camX - player.w/2) * BLOCK_SIZE;
@@ -655,6 +716,7 @@ ctx.imageSmoothingEnabled = false;
       ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
     }
 
+
     function loop() {
       update();
       draw();
@@ -664,7 +726,4 @@ ctx.imageSmoothingEnabled = false;
   </script>
 </body>
 </html>
-
-
-
 
