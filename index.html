@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -151,6 +151,8 @@
     const TICK = 1/60;
     const CHUNK_SIZE = 32;
     const MINE_REACH = 5;
+    let RENDER_SCALE = 1; // Add this at the top with other global variables
+
 
 
     // Admin password (as requested)
@@ -340,7 +342,8 @@
     // --- Infinite World Storage ---
     let world = {};
     let background = {};  // stores background blocks
-    const seed = 53758;
+    // Replace the hardcoded seed with a random one
+const seed = Math.floor(Math.random() * 1000000);
     function getBlock(x, y) {
       const key = x + "," + y;
       if(world.hasOwnProperty(key)) return world[key];
@@ -647,16 +650,31 @@
 
 
     // --- Mining and Placement with toughness & cracks ---
-    function getMouseTile(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const mx_css = clientX - rect.left;
-      const my_css = clientY - rect.top;
-      const mx = Math.floor(mx_css / (BLOCK_SIZE * RENDER_SCALE));
-      const my = Math.floor(my_css / (BLOCK_SIZE * RENDER_SCALE));
-      const cx = Math.floor(camera.x - CAMERA_WIDTH / 2 + mx);
-      const cy = Math.floor(camera.y - CAMERA_HEIGHT / 2 + my);
-      return { x: cx, y: cy };
-    }
+   function getMouseTile(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  
+  // Use the exact same scaling that's applied to the canvas
+  const transform = ctx.getTransform();
+  const scale = transform.a; // This should be DPR * RENDER_SCALE
+  
+  const blockX = Math.floor(x / (BLOCK_SIZE * scale));
+  const blockY = Math.floor(y / (BLOCK_SIZE * scale));
+  
+  // Apply offset for fullscreen mode
+  let worldX = Math.floor(camera.x - CAMERA_WIDTH / 2 + blockX);
+  let worldY = Math.floor(camera.y - CAMERA_HEIGHT / 2 + blockY);
+  
+  // Check if we're in fullscreen mode and apply offset
+  if (document.fullscreenElement) {
+    worldX -= 2; // 2 blocks left
+    worldY -= 1; // 1 block up
+  }
+  
+  return { x: worldX, y: worldY };
+}
+
 
 
     // Mining state: one block at a time
@@ -1252,11 +1270,125 @@
     if (admin.authenticated) {
       refreshAdminUI();
     }
+    
+  // --- Character selection ---
+let characterPanel = document.getElementById('characterPanel');
+let characterOptions = document.getElementById('characterOptions');
+let selectedCharacter = 'player'; // Default character
+
+// Character options with textures
+const CHARACTERS = {
+  player: {
+    name: "Default",
+    color: "#fff1c1",
+    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/player.png"
+  },
+  knight: {
+    name: "Knight",
+    color: "#8B4513",
+    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/knight.png"
+  },
+  wizard: {
+    name: "Wizard",
+    color: "#4169E1",
+    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/wizard.png"
+  },
+  thief: {
+    name: "Thief",
+    color: "#228B22",
+    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/thief.png"
+  }
+};
+
+// Preload character textures
+const characterImages = {};
+for (const [key, char] of Object.entries(CHARACTERS)) {
+  if (char.texture) {
+    const img = new window.Image();
+    img.src = char.texture;
+    characterImages[key] = {
+      img,
+      loaded: false,
+      error: false
+    };
+    img.onload = () => { characterImages[key].loaded = true; };
+    img.onerror = () => { characterImages[key].error = true; };
+  }
+}
+
+// Create character selection UI
+function createCharacterOptions() {
+  characterOptions.innerHTML = '';
+  for (const [key, char] of Object.entries(CHARACTERS)) {
+    const charDiv = document.createElement('div');
+    charDiv.style.cssText = `
+      width: 60px; height: 60px; 
+      border: 2px solid ${selectedCharacter === key ? '#fffd7f' : '#888'};
+      border-radius: 5px; 
+      background: ${char.color};
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      text-align: center;
+      padding: 2px;
+      box-sizing: border-box;
+    `;
+    charDiv.innerHTML = `<div style="font-size: 12px; margin-bottom: 2px;">${char.name}</div>`;
+    charDiv.onclick = () => {
+      selectedCharacter = key;
+      createCharacterOptions(); // Update selection highlight
+    };
+    characterOptions.appendChild(charDiv);
+  }
+}
+
+// Toggle character panel
+function toggleCharacterPanel() {
+  if (characterPanel.style.display === 'block') {
+    characterPanel.style.display = 'none';
+  } else {
+    characterPanel.style.display = 'block';
+    createCharacterOptions();
+  }
+}
+
+// Close character panel
+document.getElementById('closeCharacterBtn').addEventListener('click', () => {
+  characterPanel.style.display = 'none';
+});
+
+// Handle character selection key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'c' || e.key === 'C') {
+    e.preventDefault();
+    toggleCharacterPanel();
+  }
+});
+
+// Update player color to selected character
+function updatePlayerColor() {
+  COLORS.player = CHARACTERS[selectedCharacter].color;
+}
+
+// Update player color on character selection
+createCharacterOptions();
+updatePlayerColor();
+
 
 
     // End of script
   </script>
+  <!-- Character selection panel -->
+<div id="characterPanel" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(16,16,24,0.97); color: #fff; font-family: monospace; border: 2px solid #fffd7f; border-radius: 8px; padding: 20px; z-index: 20; display: none; box-shadow: 0 8px 32px #000a; width: 300px;">
+  <h2 style="margin: 0 0 15px 0; text-align: center;">Character Selector</h2>
+  <div id="characterOptions" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
+  <div style="margin-top: 15px; text-align: center;">
+    <button id="closeCharacterBtn" style="background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Close</button>
+  </div>
+</div>
 </body>
 </html>
-
 
