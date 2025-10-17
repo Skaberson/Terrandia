@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Terrandia</title>
-  <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Skaberson/test123/main/images/icon2.png"">
+  <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Skaberson/test123/main/images/icon2.png">
   <style>
     html, body { margin: 0; padding: 0; overflow: hidden; background: #222;}
     #inventoryPanel {
@@ -26,7 +26,7 @@
       position: relative; transition: border 0.1s, background 0.1s;
       user-select: none;
     }
-    .hotbar-slot.selected { border: 2.8px solid #fffd7f; background: #242d; }
+    .hotbar-slot.selected { border: 2.8px solid #fffd7f; background: #242d; pointer-events: auto; cursor: pointer;}
     .hotbar-slot .slot-key {
       position: absolute; top: 1px; right: 2px; font-size: 10px; color: #fff7a7; opacity: 0.65;
     }
@@ -41,9 +41,37 @@
       margin-bottom: 3px;
       box-sizing: border-box;
     }
-    #instructions { font-size: 13px; margin-top: 10px; display: none !important;}
-    #ui { display: none !important;}
     canvas { display: block; background: #223366; }
+
+
+    /* Admin panel */
+    #adminPanel {
+      position: absolute; top: 72px; left: 50%; transform: translateX(-50%);
+      background: rgba(6,6,10,0.98); color: #fff; font-family: monospace;
+      border: 2px solid #7fffd4; border-radius: 10px; min-width: 320px;
+      padding: 18px 22px; z-index: 30; display: none;
+      box-shadow: 0 12px 48px #000a;
+    }
+    #adminPanel h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; color: #bfffdc;}
+    #adminPanel .row { display:flex; gap:10px; align-items:center; margin:8px 0; }
+    #adminPanel label { flex:1; font-size:14px; opacity:0.9; }
+    #adminPanel input[type="text"], #adminPanel input[type="password"] {
+      background:#141416; color:#fff; border:1px solid #555; padding:6px 8px; border-radius:6px; min-width:130px;
+    }
+    #adminPanel button {
+      background: linear-gradient(#1b5,#0a6); border:1px solid #083; color:#012; padding:6px 8px; border-radius:6px; cursor:pointer;
+    }
+    #adminPanel .danger {
+      background: linear-gradient(#f66,#d33); border:1px solid #b11; color:#fff;
+    }
+    #adminPanel .checkbox { transform: translateY(2px); }
+    #adminMessage { font-size:13px; color:#dff; opacity:0.95; text-align:center; margin-top:8px; }
+    #adminLogin { display:block; }
+    #adminControls { display:none; }
+
+
+    /* small helper notes */
+    .hint { font-size:12px; opacity:0.7; margin-top:6px; text-align:center; }
   </style>
 </head>
 <body>
@@ -51,12 +79,69 @@
     <h2>Inventory <span style="font-size:12px;opacity:.6">(press I to close)</span></h2>
     <div id="inventoryItems"></div>
   </div>
+
+
+  <!-- Admin panel -->
+  <div id="adminPanel" aria-hidden="true">
+    <h3>Admin Console</h3>
+
+
+    <div id="adminLogin">
+      <div class="row">
+        <label>Password:</label>
+        <input id="adminPassword" type="password" placeholder="enter password" />
+        <button id="adminLoginBtn">Login</button>
+      </div>
+      <div class="hint">Press P to open this panel. Password required.</div>
+      <div id="adminLoginMsg" class="hint" style="color:#f88"></div>
+    </div>
+
+
+    <div id="adminControls">
+      <div class="row">
+        <label>Enable Dynamine (instant 3x3 mining)</label>
+        <input id="dynamineToggle" class="checkbox" type="checkbox" />
+      </div>
+      <div class="row">
+        <label>Enable Noclip (walk through blocks)</label>
+        <input id="noclipToggle" class="checkbox" type="checkbox" />
+      </div>
+      <div class="row">
+        <label>Enable Fly (disable gravity; use W/S to move up/down)</label>
+        <input id="flyToggle" class="checkbox" type="checkbox" />
+      </div>
+      <div class="row">
+        <label>Give 99 of selected hotbar item</label>
+        <button id="give99Btn">Give 99</button>
+      </div>
+      <div class="row">
+        <label>Teleport to spawn (0, surface)</label>
+        <button id="teleportBtn">Teleport</button>
+      </div>
+      <div class="row">
+        <label>Clear nearby blocks 5x5 (centered)</label>
+        <button id="clear5Btn">Clear 5x5</button>
+      </div>
+
+
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+        <button id="closeAdminBtn">Close</button>
+        <button id="logoutAdminBtn" class="danger">Logout</button>
+      </div>
+
+
+      <div id="adminMessage"></div>
+    </div>
+  </div>
+
+
   <div id="hotbar"></div>
   <canvas id="game" tabindex="0"></canvas>
   <script>
     // --- Config ---
     const BLOCK_SIZE = 24;
     const BLOCK_SCALE = 1.03;
+    const BACKGROUND_BLOCK_SCALE = 2.0;
     const CAMERA_WIDTH = 16;
     const CAMERA_HEIGHT = 9;
     const GROUND_LEVEL = 10;
@@ -66,6 +151,54 @@
     const TICK = 1/60;
     const CHUNK_SIZE = 32;
     const MINE_REACH = 5;
+
+
+    // Admin password (as requested)
+    const ADMIN_PASSWORD = "ultragaming";
+
+
+    // --- Underworld layers config ---
+    const UNDERWORLD_LAYERS = [
+      { name: "styx_temple", y: -150, height: 10, bg: "styx_bg" },
+      { name: "elysium", y: -250, height: 10, bg: "elysium_bg" },
+      { name: "asphodel", y: -350, height: 10, bg: "asphodel_bg" },
+      { name: "tartarus", y: -450, height: 14, bg: "tartarus_bg" },
+      { name: "hades_house", y: -500, height: 20, bg: "hades_bg" }
+    ];
+
+
+    // --- Block toughness for mining speed (seconds to mine) ---
+    const TOUGHNESS = {
+      air: 0,
+      grass: 0.6,
+      dirt: 0.7,
+      stone: 1.2,
+      sand: 0.5,
+      clay: 0.8,
+      snow: 0.5,
+      hotstone: 1.5,
+      magma: 1.8,
+      lava: 0,
+      leaf: 0.3,
+      wood: 0.9,
+      brick: 1.4,
+      ore: 2.0,
+      player: 0,
+      select: 0,
+      cloud: 0.4,
+      hellstone: 2.5,
+      styx_temple: 2.2,
+      elysium: 1.6,
+      asphodel: 1.8,
+      tartarus: 2.8,
+      hades_house: 3.0,
+      darkstone_bg: 0, // unminable
+      styx_bg: 0,
+      elysium_bg: 0,
+      asphodel_bg: 0,
+      tartarus_bg: 0,
+      hades_bg: 0
+    };
 
 
     // --- Block colors (fallback) ---
@@ -85,14 +218,21 @@
       brick: "#a64832",
       ore: "#e4e45c",
       player: "#fff1c1",
-      select: "#fffd7f"
+      select: "#fffd7f",
+      cloud: "#e3eaff",
+      hellstone: "#6c162b",
+      styx_temple: "#d4bfae",
+      elysium: "#a1e2c1",
+      asphodel: "#cfcfcf",
+      tartarus: "#5c1a5c",
+      hades_house: "#222222",
+      darkstone_bg: "#333344",
+      styx_bg: "#b2a17c",
+      elysium_bg: "#8ec9aa",
+      asphodel_bg: "#bbbbbb",
+      tartarus_bg: "#3a083a",
+      hades_bg: "#111111"
     };
-
-
-    // The order & allowed block types for the hotbar.
-    const HOTBAR_BLOCKS = [
-      "dirt", "stone", "sand", "clay", "snow", "hotstone", "magma", "wood", "brick"
-    ];
 
 
     // --- Block images (edit these for custom textures!) ---
@@ -109,8 +249,31 @@
       leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/images/leaves_00.png",
       wood: "https://raw.githubusercontent.com/Skaberson/test123/main/images/wood_0.png",
       brick: "",
-      ore: ""
+      ore: "",
+      cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
+      hellstone: "",
+      styx_temple: "",
+      elysium: "",
+      asphodel: "",
+      tartarus: "",
+      hades_house: "",
+      darkstone_bg: "",
+      styx_bg: "",
+      elysium_bg: "",
+      asphodel_bg: "",
+      tartarus_bg: "",
+      hades_bg: ""
     };
+
+
+    // --- Hotbar blocks (no unminable backgrounds) ---
+    const HOTBAR_BLOCKS = [
+      "dirt", "stone", "sand", "clay", "snow", "hotstone", "magma", "wood", "brick", "cloud"
+    ];
+
+
+    // --- Crack texture image (set this to your texture's URL) ---
+    const CRACK_IMAGE_URL = "crack.png";
 
 
     // --- Preload images and track status ---
@@ -128,6 +291,11 @@
         img.onerror = () => { imageCache[type].error = true; };
       }
     }
+    // Preload crack image
+    const crackImg = new window.Image();
+    crackImg.src = CRACK_IMAGE_URL;
+    let crackLoaded = false;
+    crackImg.onload = () => { crackLoaded = true; };
 
 
     // --- PRNG and Noise ---
@@ -171,6 +339,7 @@
 
     // --- Infinite World Storage ---
     let world = {};
+    let background = {};  // stores background blocks
     const seed = 53758;
     function getBlock(x, y) {
       const key = x + "," + y;
@@ -180,11 +349,46 @@
     function setBlock(x, y, type) {
       world[x+','+y] = type;
     }
+    function getBackground(x, y) {
+      const key = x + "," + y;
+      if(background.hasOwnProperty(key)) return background[key];
+      return null;
+    }
+    function setBackground(x, y, type) {
+      background[x+','+y] = type;
+    }
 
 
-    // --- Terraria-style cave generation: more common, but not right under surface ---
+    // --- Greek Underworld Layer Generation ---
+    function isUnderworldLayer(y) {
+      for (const layer of UNDERWORLD_LAYERS) {
+        if (y >= layer.y && y < layer.y + layer.height)
+          return layer;
+      }
+      return null;
+    }
+
+
+    // --- Sky Islands Helper ---
+    function generateSkyIsland(x, y) {
+      let islandRadiusX = 4 + Math.floor(valueNoise(x*2, seed)*3);
+      let islandRadiusY = 2 + Math.floor(valueNoise(x*3, seed)*2);
+      let hasGrass = valueNoise(x*4, seed) > 0.5;
+      for (let ix = -islandRadiusX; ix <= islandRadiusX; ix++) {
+        for (let iy = -islandRadiusY; iy <= islandRadiusY; iy++) {
+          if ((ix*ix)/(islandRadiusX*islandRadiusX) + (iy*iy)/(islandRadiusY*islandRadiusY) <= 1) {
+            setBlock(x+ix, y+iy, "cloud");
+            if (iy === -islandRadiusY && hasGrass && Math.abs(ix) <= islandRadiusX-1) {
+              setBlock(x+ix, y+iy-1, valueNoise(x+ix, seed*7) > 0.5 ? "grass" : "dirt");
+            }
+          }
+        }
+      }
+    }
+
+
     function cave2D(x, y, biome, surf) {
-      if (y <= surf + 70) return false; // Never above y = surface+5
+      if (y <= surf + 70) return false;
       let caveNoise = perlin1d(x/8 + y/16, 777+biome.name.length)*0.6
                     + perlin1d(x/18 - y/25, 888-biome.name.length)*0.4;
       let tunnelNoise = perlin1d(x/13 + y/45, 999)*0.7
@@ -201,17 +405,54 @@
         let x = cx * CHUNK_SIZE + dx;
         const biome = getBiome(x);
         let h = Math.floor(GROUND_LEVEL + perlin1d(x/8, seed)*7 + perlin1d(x/2, seed*2)*3 + perlin1d(x/18, seed*biome.name.length)*2);
+
+
+        let skyY = h - 100;
+        if (cy === Math.floor(skyY / CHUNK_SIZE)) {
+          if (valueNoise(x, 99999) > 0.985) {
+            let islandY = skyY + Math.floor(valueNoise(x*11, seed)*8) - 3;
+            generateSkyIsland(x, islandY);
+          }
+        }
+
+
         for(let dy=0; dy<CHUNK_SIZE; dy++) {
           let y = cy * CHUNK_SIZE + dy;
           let key = x + "," + y;
           if(world.hasOwnProperty(key)) continue;
+
+
+          // --- Greek Underworld Layers ---
+          let layer = isUnderworldLayer(y);
+          if (layer) {
+            let type = "air";
+            if (y === layer.y || y === layer.y + layer.height - 1 || x % 32 === 0 || x % 32 === 31) {
+              type = layer.name;
+            } else if ((x+layer.y)%30 === 0 && y > layer.y && y < layer.y + layer.height - 1) {
+              type = layer.name;
+            }
+            // Set background for this layer
+            setBackground(x, y, layer.bg);
+            world[key] = type;
+            continue;
+          }
+
+
+          // --- Normal terrain generation ---
           let type = "air";
           let temp = 0.0 + y*0.008;
           let stoneType = "stone";
           if (temp > 2.5) stoneType = "hotstone";
           if (temp > 5.5) stoneType = "magma";
           if (temp > 8.5) stoneType = "lava";
-          if(y < h) type = 'air';
+          if (y > h + 200) {
+            if (valueNoise(x + y*13, seed*3) > 0.92) {
+              type = "lava";
+            } else {
+              type = "hellstone";
+            }
+          }
+          else if(y < h) type = 'air';
           else if(y == h) type = biome.surface;
           else if(y < h+3) type = biome.dirt;
           else type = stoneType;
@@ -234,6 +475,12 @@
             setBlock(x, y-4, "leaf");
           }
           world[key] = type;
+
+
+          // --- Background logic: 5 blocks below surface level, darker stone background
+          if (y >= h + 5 && y < h + 10 && type !== 'air') {
+            setBackground(x, y, "darkstone_bg");
+          }
         }
       }
     }
@@ -262,32 +509,24 @@
     // --- Canvas Setup ---
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
-ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = false;
 
 
-function resizeCanvas() {
-  const DPR = window.devicePixelRatio || 1;
-
-
-  const minWidthScale  = Math.floor(window.innerWidth  / (CAMERA_WIDTH  * BLOCK_SIZE)) || 1;
-  const minHeightScale = Math.floor(window.innerHeight / (CAMERA_HEIGHT * BLOCK_SIZE)) || 1;
-  RENDER_SCALE = Math.max(1, Math.min(minWidthScale, minHeightScale));
-
-
-  const cssWidth  = CAMERA_WIDTH  * BLOCK_SIZE * RENDER_SCALE;
-  const cssHeight = CAMERA_HEIGHT * BLOCK_SIZE * RENDER_SCALE;
-
-
-  canvas.style.width  = cssWidth + "px";
-  canvas.style.height = cssHeight + "px";
-  canvas.width  = Math.floor(cssWidth * DPR);
-  canvas.height = Math.floor(cssHeight * DPR);
-
-
-  ctx.setTransform(DPR * RENDER_SCALE, 0, 0, DPR * RENDER_SCALE, 0, 0);
-  ctx.imageSmoothingEnabled = false;
-  ctx.imageSmoothingQuality = "low";
-}
+    function resizeCanvas() {
+      const DPR = window.devicePixelRatio || 1;
+      const minWidthScale  = Math.floor(window.innerWidth  / (CAMERA_WIDTH  * BLOCK_SIZE)) || 1;
+      const minHeightScale = Math.floor(window.innerHeight / (CAMERA_HEIGHT * BLOCK_SIZE)) || 1;
+      RENDER_SCALE = Math.max(1, Math.min(minWidthScale, minHeightScale));
+      const cssWidth  = CAMERA_WIDTH  * BLOCK_SIZE * RENDER_SCALE;
+      const cssHeight = CAMERA_HEIGHT * BLOCK_SIZE * RENDER_SCALE;
+      canvas.style.width  = cssWidth + "px";
+      canvas.style.height = cssHeight + "px";
+      canvas.width  = Math.floor(cssWidth * DPR);
+      canvas.height = Math.floor(cssHeight * DPR);
+      ctx.setTransform(DPR * RENDER_SCALE, 0, 0, DPR * RENDER_SCALE, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingQuality = "low";
+    }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
@@ -326,6 +565,22 @@ function resizeCanvas() {
       x: player.x,
       y: player.y
     };
+
+
+    // --- Admin state ---
+    const admin = {
+      authenticated: false,
+      dynamine: false,
+      noclip: false,
+      fly: false
+    };
+
+
+    // Try restore auth (so a reload won't leak password, only a saved flag)
+    try {
+      const saved = localStorage.getItem("terr_admin_authed");
+      if (saved === "1") admin.authenticated = true;
+    } catch (e) {}
 
 
     // --- Inventory logic ---
@@ -391,84 +646,51 @@ function resizeCanvas() {
     updateHotbar();
 
 
-    // --- Mining ---
-    let minedBlocks = 0;
-    let mouseTile = null;
-    let mouseDown = false, mouseRight = false;
-    let mouseTileRefresh = {x: 0, y: 0};
-    let mouseTileLast = {x: 0, y: 0};
-    let mouseTileTimer = 0;
-
-
-   function getMouseTile(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  const mx_css = clientX - rect.left;
-  const my_css = clientY - rect.top;
-  const mx = Math.floor(mx_css / (BLOCK_SIZE * RENDER_SCALE));
-  const my = Math.floor(my_css / (BLOCK_SIZE * RENDER_SCALE));
-  const cx = Math.floor(camera.x - CAMERA_WIDTH / 2 + mx);
-  const cy = Math.floor(camera.y - CAMERA_HEIGHT / 2 + my);
-  return { x: cx, y: cy };
-}
-    canvas.addEventListener('mousemove', (e)=>{
-      mouseTile = getMouseTile(e.clientX, e.clientY);
-      mouseTileRefresh = mouseTile;
-      mouseTileTimer = 0;
-    });
-    canvas.addEventListener('mouseleave', ()=>{ mouseTile = null; });
-    canvas.addEventListener('mousedown', (e)=>{
-      if (inventoryOpen) return;
-      mouseDown = true;
-      mouseRight = e.button === 2;
-      attemptMineOrPlace();
-      canvas.focus();
-    });
-    canvas.addEventListener('mouseup', ()=>{ mouseDown = false; });
-    canvas.addEventListener('contextmenu', e=>e.preventDefault());
-
-
-    function periodicMouseTileRefresh() {
-      mouseTileTimer += 1;
-      if (mouseTile && (mouseTile.x !== mouseTileLast.x || mouseTile.y !== mouseTileLast.y)) {
-        mouseTileRefresh = { ...mouseTile };
-        mouseTileLast = { ...mouseTile };
-        mouseTileTimer = 0;
-      } else if (mouseTile && mouseTileTimer >= 60) {
-        let rect = canvas.getBoundingClientRect();
-        let mx = ((mouseTile.x + CAMERA_WIDTH/2 - camera.x) * BLOCK_SIZE) * (rect.width / canvas.width) + rect.left + 0.1;
-        let my = ((mouseTile.y + CAMERA_HEIGHT/2 - camera.y) * BLOCK_SIZE) * (rect.height / canvas.height) + rect.top + 0.1;
-        mouseTileRefresh = getMouseTile(mx, my);
-        mouseTileTimer = 0;
-      }
+    // --- Mining and Placement with toughness & cracks ---
+    function getMouseTile(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const mx_css = clientX - rect.left;
+      const my_css = clientY - rect.top;
+      const mx = Math.floor(mx_css / (BLOCK_SIZE * RENDER_SCALE));
+      const my = Math.floor(my_css / (BLOCK_SIZE * RENDER_SCALE));
+      const cx = Math.floor(camera.x - CAMERA_WIDTH / 2 + mx);
+      const cy = Math.floor(camera.y - CAMERA_HEIGHT / 2 + my);
+      return { x: cx, y: cy };
     }
 
 
-    function attemptMineOrPlace() {
-      if(!mouseTileRefresh) return;
-      let {x, y} = mouseTileRefresh;
-      if (!isInReach(x, y)) return;
-      let t = getBlock(x, y);
+    // Mining state: one block at a time
+    let mining = {
+      active: false,
+      x: null,
+      y: null,
+      startTime: null,
+      duration: null,
+      blockType: null,
+      mouseButton: null
+    };
+
+
+    let mouseDown = false;
+    let mouseButton = null;
+
+
+    function handlePlace(tile) {
+      let t = getBlock(tile.x, tile.y);
       let placeBlock = HOTBAR_BLOCKS[hotbarSelected];
-      if(mouseRight) {
-        if(t === 'air' && (inventory[placeBlock]||0)>0) {
-          for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-            let nx = x+dx, ny = y+dy;
-            let nt = getBlock(nx, ny);
-            if(nt && nt != 'air') {
-              setBlock(x, y, placeBlock);
-              inventory[placeBlock]--;
-              updateHotbar();
-              updateInventoryDisplay();
-              break;
-            }
+      if(t === 'air' && (inventory[placeBlock]||0)>0) {
+        let adjacentSolid = false;
+        for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          let nx = tile.x+dx, ny = tile.y+dy;
+          let nt = getBlock(nx, ny);
+          if(nt && nt != 'air') {
+            adjacentSolid = true;
+            break;
           }
         }
-      } else {
-        if(t && t !== 'air') {
-          setBlock(x, y, 'air');
-          minedBlocks++;
-          addToInventory(t, 1);
-          document.getElementById('mined').innerText = minedBlocks;
+        if(adjacentSolid) {
+          setBlock(tile.x, tile.y, placeBlock);
+          inventory[placeBlock]--;
           updateHotbar();
           updateInventoryDisplay();
         }
@@ -476,8 +698,127 @@ function resizeCanvas() {
     }
 
 
+    function validToMine(type) {
+      if(!type) return false;
+      if(type === 'air') return false;
+      if(type.endsWith("_bg")) return false;
+      if((TOUGHNESS[type] || 0) <= 0) return false;
+      return true;
+    }
+
+
+    function areaMine(centerX, centerY) {
+      // Remove a 3x3 area centered at centerX, centerY
+      let removed = 0;
+      for(let dx=-1; dx<=1; dx++) {
+        for(let dy=-1; dy<=1; dy++) {
+          let bx = centerX + dx;
+          let by = centerY + dy;
+          let t = getBlock(bx, by);
+          if(validToMine(t) && isInReach(bx, by)) {
+            setBlock(bx, by, 'air');
+            addToInventory(t, 1);
+            removed++;
+          }
+        }
+      }
+      return removed;
+    }
+
+
+    function startMining(tile) {
+      if (!isInReach(tile.x, tile.y)) return;
+      let t = getBlock(tile.x, tile.y);
+      if(!t || t === 'air' || TOUGHNESS[t] === 0 || t.endsWith("_bg")) return;
+      if(mining.active && mining.x === tile.x && mining.y === tile.y) return;
+
+
+      // If admin dynamine is enabled, instantly mine a 3x3 area
+      if (admin.authenticated && admin.dynamine) {
+        areaMine(tile.x, tile.y);
+        // provide small visual feedback by briefly setting mining state
+        mining.active = true;
+        mining.x = tile.x;
+        mining.y = tile.y;
+        mining.startTime = performance.now();
+        mining.duration = 120; // very short
+        mining.blockType = null;
+        mining.mouseButton = 0;
+        return;
+      }
+
+
+      mining.active = true;
+      mining.x = tile.x;
+      mining.y = tile.y;
+      mining.startTime = performance.now();
+      mining.duration = (TOUGHNESS[t] || 1.0) * 1000;
+      mining.blockType = t;
+      mining.mouseButton = 0;
+    }
+
+
+    function stopMining() {
+      mining.active = false;
+      mining.x = null;
+      mining.y = null;
+      mining.startTime = null;
+      mining.duration = null;
+      mining.blockType = null;
+      mining.mouseButton = null;
+    }
+
+
+    canvas.addEventListener('mousedown', (e)=>{
+      if (inventoryOpen) return;
+      mouseDown = true;
+      mouseButton = e.button;
+      const mouseTile = getMouseTile(e.clientX, e.clientY);
+      if (mouseButton === 0) { // left
+        startMining(mouseTile);
+      }
+      else if (mouseButton === 2) { // right
+        handlePlace(mouseTile);
+      }
+      canvas.focus();
+    });
+
+
+    canvas.addEventListener('mouseup', ()=>{
+      mouseDown = false;
+      mouseButton = null;
+      stopMining();
+    });
+
+
+    canvas.addEventListener('mouseleave', ()=>{
+      mouseDown = false;
+      mouseButton = null;
+      stopMining();
+    });
+
+
+    canvas.addEventListener('mousemove', (e)=>{
+      if (inventoryOpen) return;
+      const mouseTile = getMouseTile(e.clientX, e.clientY);
+      if (!mouseDown) {
+        stopMining();
+        return;
+      }
+      if (mouseButton === 0) { // left
+        startMining(mouseTile);
+      }
+      else if (mouseButton === 2) { // right
+        handlePlace(mouseTile);
+      }
+    });
+
+
+    canvas.addEventListener('contextmenu', e=>e.preventDefault());
+
+
     // --- Controls ---
-    let left = false, right = false, up = false, jumpRequest = false;
+    let left = false, right = false, up = false, down = false, jumpRequest = false;
     function handleKeydown(e) {
       if (e.repeat) return;
       if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') left = true;
@@ -485,6 +826,7 @@ function resizeCanvas() {
       if(e.key==='ArrowUp' || e.key==='w' || e.key==='W') {
         up = true; jumpRequest = true;
       }
+      if(e.key==='ArrowDown' || e.key==='s' || e.key==='S') down = true;
       if(e.key===' ' ) { up = true; jumpRequest = true; }
       if(e.key==='f' || e.key==='F') {
         if (!document.fullscreenElement) {
@@ -501,13 +843,15 @@ function resizeCanvas() {
           setTimeout(()=>canvas.focus(), 100);
         }
       }
-      // Inventory toggle
       if(e.key==='i' || e.key==='I') {
         inventoryOpen = !inventoryOpen;
         if(inventoryOpen) showInventory();
         else hideInventory();
       }
-      // Hotbar numbers (1-9)
+      // Admin panel toggle (press P)
+      if(e.key==='p' || e.key==='P') {
+        toggleAdminPanel();
+      }
       if(/[1-9]/.test(e.key)) {
         let idx = parseInt(e.key)-1;
         if(idx >= 0 && idx < HOTBAR_BLOCKS.length) {
@@ -520,25 +864,23 @@ function resizeCanvas() {
       if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') left = false;
       if(e.key==='ArrowRight' || e.key==='d' || e.key==='D') right = false;
       if(e.key==='ArrowUp' || e.key==='w' || e.key==='W' || e.key===' ') up = false;
+      if(e.key==='ArrowDown' || e.key==='s' || e.key==='S') down = false;
     }
     document.addEventListener('keydown', handleKeydown);
     document.addEventListener('keyup', handleKeyup);
 
 
-    // --- Collision helpers ---
     function isSolid(x, y) {
+      // Admin noclip bypasses solidity
+      if (admin.authenticated && admin.noclip) return false;
       let t = getBlock(x, y);
-      return t && t !== 'air';
+      return t && t !== 'air' && !t.endsWith("_bg");
     }
 
 
-    // --- Terraria-style AABB collision (X then Y, flush with all blocks, matches draw) ---
     function collideAABB(px, py, vx, vy, w, h) {
       let nx = px, ny = py;
       let onGround = false;
-
-
-      // Move X
       nx += vx;
       let minY = Math.floor(ny + 1e-8), maxY = Math.floor(ny + h - 1e-8);
       if(vx > 0) {
@@ -560,9 +902,6 @@ function resizeCanvas() {
           }
         }
       }
-
-
-      // Move Y
       ny += vy;
       let minX = Math.floor(nx - w/2 + 1e-8), maxX = Math.floor(nx + w/2 - 1e-8);
       if(vy > 0) {
@@ -585,13 +924,10 @@ function resizeCanvas() {
           }
         }
       }
-
-
       return {x: nx, y: ny, onGround};
     }
 
 
-    // --- Jump Physics (Smooth, always consistent height) ---
     let jumpActive = false;
     let jumpTimer = 0;
     const JUMP_DURATION = 0.34;
@@ -599,67 +935,81 @@ function resizeCanvas() {
 
     function update() {
       ensureWorldGenerated(camera.x, camera.y);
-
-
       let targetVx = 0;
       if(left) targetVx -= MOVE_SPEED;
       if(right) targetVx += MOVE_SPEED;
       player.vx += (targetVx - player.vx) * 0.25;
 
 
-      if(jumpRequest && player.onGround && !jumpActive) {
-        jumpActive = true;
-        jumpTimer = 0;
-      }
-      jumpRequest = false;
-
-
-      let vy = player.vy;
-      if(jumpActive) {
-        jumpTimer += TICK;
-        let t = jumpTimer/JUMP_DURATION;
-        if(t < 1) {
-          vy = -JUMP_VEL*(1-t);
-        } else {
-          jumpActive = false;
+      // Admin fly handling
+      if (admin.authenticated && admin.fly) {
+        // Fly: ignore normal gravity; use up/down keys to go up/down
+        if (up) player.vy = -MOVE_SPEED;
+        else if (down) player.vy = MOVE_SPEED;
+        else player.vy = 0;
+      } else {
+        if(jumpRequest && player.onGround && !jumpActive) {
+          jumpActive = true;
+          jumpTimer = 0;
         }
-      } else {
-        vy += GRAVITY;
-      }
-
-
-      let move = collideAABB(player.x, player.y, player.vx*TICK, vy*TICK, player.w, player.h);
-      player.x = move.x;
-      player.y = move.y;
-      player.onGround = move.onGround;
-
-
-      if(player.onGround) {
-        player.vy = 0;
-        jumpActive = false;
-      } else {
+        jumpRequest = false;
+        let vy = player.vy;
+        if(jumpActive) {
+          jumpTimer += TICK;
+          let t = jumpTimer/JUMP_DURATION;
+          if(t < 1) {
+            vy = -JUMP_VEL*(1-t);
+          } else {
+            jumpActive = false;
+          }
+        } else {
+          vy += GRAVITY;
+        }
         player.vy = vy;
       }
 
 
+      if (admin.authenticated && admin.fly) {
+        // use already-set player.vy from fly handling
+      }
+
+
+      let move = collideAABB(player.x, player.y, player.vx*TICK, player.vy*TICK, player.w, player.h);
+      player.x = move.x;
+      player.y = move.y;
+      player.onGround = move.onGround;
+      if(player.onGround) {
+        player.vy = 0;
+        jumpActive = false;
+      }
+
+
       player.y = Math.max(-CAMERA_HEIGHT, player.y);
-
-
-      // Camera follows player smoothly (lerp)
       let camTargetX = player.x;
       let camTargetY = player.y;
       camera.x += (camTargetX - camera.x) * 0.12;
       camera.y += (camTargetY - camera.y) * 0.12;
 
 
-      if(!inventoryOpen && mouseDown && player.miningCooldown <= 0) {
-        attemptMineOrPlace();
-        player.miningCooldown = 0.12;
+      // Mining completion handling
+      if (mining.active && mining.duration != null) {
+        let now = performance.now();
+        let progress = (now - mining.startTime) / mining.duration;
+        if (progress >= 1) {
+          // If dynamine was not used for the start, complete the one block normally
+          if (!(admin.authenticated && admin.dynamine && mining.duration <= 120)) {
+            // normal single-block mining
+            if (mining.blockType) {
+              setBlock(mining.x, mining.y, 'air');
+              addToInventory(mining.blockType, 1);
+            }
+          } else {
+            // If admin had dynamine, we already did areaMine on start; but in case mining was set as short duration,
+            // don't duplicate actions (we set mining.blockType to null for the short admin run), so nothing here.
+          }
+          stopMining();
+        }
       }
-      if(player.miningCooldown > 0) player.miningCooldown -= TICK;
-
-
-      periodicMouseTileRefresh();
     }
 
 
@@ -669,8 +1019,32 @@ function resizeCanvas() {
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
 
-      // Draw world blocks, at exact world position (no offset bug!)
+      // Draw background blocks, then foreground blocks
       let left = Math.floor(camX), top = Math.floor(camY);
+      // Background pass
+      for(let x=left; x<=left+CAMERA_WIDTH; x++) {
+        for(let y=top; y<=top+CAMERA_HEIGHT; y++) {
+          let t = getBackground(x, y);
+          if(t) {
+            let px = (x - camX) * BLOCK_SIZE;
+            let py = (y - camY) * BLOCK_SIZE;
+            let size = BLOCK_SIZE * BACKGROUND_BLOCK_SCALE;
+            let adjust = (size - BLOCK_SIZE) / 2;
+            if (
+              BLOCK_IMAGES[t] &&
+              imageCache[t] &&
+              imageCache[t].loaded &&
+              !imageCache[t].error
+            ) {
+              ctx.drawImage(imageCache[t].img, px - adjust, py - adjust, size, size);
+            } else {
+              ctx.fillStyle = COLORS[t] || "#222";
+              ctx.fillRect(px - adjust, py - adjust, size, size);
+            }
+          }
+        }
+      }
+      // Foreground pass
       for(let x=left; x<=left+CAMERA_WIDTH; x++) {
         for(let y=top; y<=top+CAMERA_HEIGHT; y++) {
           let t = getBlock(x, y);
@@ -690,23 +1064,25 @@ function resizeCanvas() {
               ctx.fillStyle = COLORS[t] || "#ff00ff";
               ctx.fillRect(px - adjust, py - adjust, size, size);
             }
+            if (mining.active && mining.x === x && mining.y === y && crackLoaded) {
+              let now = performance.now();
+              let progress = Math.min(1, (now - mining.startTime) / (mining.duration || 200));
+              let crackScale = lerp(0.3, 1.0, progress);
+              let crackSize = BLOCK_SIZE * crackScale;
+              let crackAdjust = (crackSize - BLOCK_SIZE) / 2;
+              ctx.save();
+              ctx.globalAlpha = 0.35 + 0.65 * progress;
+              ctx.drawImage(crackImg,
+                px - crackAdjust,
+                py - crackAdjust,
+                crackSize,
+                crackSize
+              );
+              ctx.restore();
+            }
           }
         }
       }
-
-
-      // Draw mining/highlight box snapped perfectly to grid, always follows mouse
-      if(mouseTileRefresh) {
-        let inReach = isInReach(mouseTileRefresh.x, mouseTileRefresh.y);
-        let px = (mouseTileRefresh.x - camX) * BLOCK_SIZE + 1;
-        let py = (mouseTileRefresh.y - camY) * BLOCK_SIZE + 1;
-        ctx.strokeStyle = inReach ? COLORS.select : "#f44";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(px, py, BLOCK_SIZE-2, BLOCK_SIZE-2);
-      }
-
-
-      // Draw player
       let sx = (player.x - camX - player.w/2) * BLOCK_SIZE;
       let sy = (player.y - camY) * BLOCK_SIZE;
       ctx.fillStyle = COLORS.player;
@@ -723,7 +1099,162 @@ function resizeCanvas() {
       requestAnimationFrame(loop);
     }
     loop();
+
+
+    // ----------------
+    // Admin panel logic
+    // ----------------
+    const adminPanel = document.getElementById('adminPanel');
+    const adminLoginDiv = document.getElementById('adminLogin');
+    const adminControlsDiv = document.getElementById('adminControls');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminLoginMsg = document.getElementById('adminLoginMsg');
+    const adminMessage = document.getElementById('adminMessage');
+
+
+    const dynamineToggle = document.getElementById('dynamineToggle');
+    const noclipToggle = document.getElementById('noclipToggle');
+    const flyToggle = document.getElementById('flyToggle');
+    const give99Btn = document.getElementById('give99Btn');
+    const teleportBtn = document.getElementById('teleportBtn');
+    const closeAdminBtn = document.getElementById('closeAdminBtn');
+    const logoutAdminBtn = document.getElementById('logoutAdminBtn');
+    const clear5Btn = document.getElementById('clear5Btn');
+
+
+    // initialize toggles from admin state
+    function refreshAdminUI() {
+      dynamineToggle.checked = !!admin.dynamine;
+      noclipToggle.checked = !!admin.noclip;
+      flyToggle.checked = !!admin.fly;
+      if (admin.authenticated) {
+        adminLoginDiv.style.display = "none";
+        adminControlsDiv.style.display = "block";
+        adminPanel.setAttribute("aria-hidden", "false");
+      } else {
+        adminLoginDiv.style.display = "block";
+        adminControlsDiv.style.display = "none";
+        adminPanel.setAttribute("aria-hidden", "true");
+      }
+    }
+    refreshAdminUI();
+
+
+    function openAdminPanel() {
+      adminPanel.style.display = "block";
+      adminPanel.style.opacity = "1";
+      if (admin.authenticated) {
+        adminPasswordInput.value = "";
+      } else {
+        adminPasswordInput.value = "";
+        adminPasswordInput.focus();
+      }
+      refreshAdminUI();
+    }
+    function closeAdminPanel() {
+      adminPanel.style.display = "none";
+    }
+    function toggleAdminPanel() {
+      if (adminPanel.style.display === "block") {
+        closeAdminPanel();
+      } else {
+        openAdminPanel();
+      }
+    }
+
+
+    adminLoginBtn.addEventListener('click', ()=>{
+      const val = adminPasswordInput.value || "";
+      if (val === ADMIN_PASSWORD) {
+        admin.authenticated = true;
+        try { localStorage.setItem("terr_admin_authed", "1"); } catch (e){}
+        adminLoginMsg.textContent = "";
+        adminMessage.textContent = "Welcome, admin.";
+        refreshAdminUI();
+      } else {
+        adminLoginMsg.textContent = "Incorrect password.";
+      }
+    });
+
+
+    dynamineToggle.addEventListener('change', (e)=>{
+      admin.dynamine = !!e.target.checked;
+      adminMessage.textContent = "Dynamine " + (admin.dynamine ? "enabled" : "disabled") + ".";
+    });
+    noclipToggle.addEventListener('change', (e)=>{
+      admin.noclip = !!e.target.checked;
+      adminMessage.textContent = "Noclip " + (admin.noclip ? "enabled" : "disabled") + ".";
+    });
+    flyToggle.addEventListener('change', (e)=>{
+      admin.fly = !!e.target.checked;
+      adminMessage.textContent = "Fly " + (admin.fly ? "enabled" : "disabled") + ".";
+    });
+
+
+    give99Btn.addEventListener('click', ()=>{
+      const block = HOTBAR_BLOCKS[hotbarSelected];
+      inventory[block] = (inventory[block] || 0) + 99;
+      updateHotbar();
+      updateInventoryDisplay();
+      adminMessage.textContent = `Gave 99 x ${block}.`;
+    });
+
+
+    teleportBtn.addEventListener('click', ()=>{
+      player.x = 0;
+      player.y = findGroundStartX(0);
+      camera.x = player.x;
+      camera.y = player.y;
+      adminMessage.textContent = "Teleported to spawn.";
+    });
+
+
+    clear5Btn.addEventListener('click', ()=>{
+      // Clear a 5x5 centered around the player's targeted tile (mouse) or player pos if mouse outside
+      const rect = canvas.getBoundingClientRect();
+      const mx_css = (rect.left + rect.right) / 2;
+      const my_css = (rect.top + rect.bottom) / 2;
+      const mouseTile = getMouseTile(mx_css, my_css);
+      let cx = mouseTile.x, cy = mouseTile.y;
+      // ensure world around exists
+      for(let dx=-2; dx<=2; dx++) for(let dy=-2; dy<=2; dy++) {
+        const bx = cx+dx, by = cy+dy;
+        let t = getBlock(bx, by);
+        if(validToMine(t)) {
+          setBlock(bx, by, 'air');
+          addToInventory(t, 1);
+        }
+      }
+      adminMessage.textContent = "Cleared 5x5 and added removed blocks to inventory.";
+    });
+
+
+    closeAdminBtn.addEventListener('click', ()=>{ closeAdminPanel(); });
+    logoutAdminBtn.addEventListener('click', ()=>{
+      admin.authenticated = false;
+      admin.dynamine = false;
+      admin.noclip = false;
+      admin.fly = false;
+      try { localStorage.removeItem("terr_admin_authed"); } catch (e){}
+      adminMessage.textContent = "Logged out.";
+      refreshAdminUI();
+    });
+
+
+    // Small UX: press Enter in password field
+    adminPasswordInput.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') adminLoginBtn.click();
+    });
+
+
+    // If page loads and admin was authed from previous session, refresh UI
+    if (admin.authenticated) {
+      refreshAdminUI();
+    }
+
+
+    // End of script
   </script>
 </body>
 </html>
-
