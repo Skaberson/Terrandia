@@ -5,142 +5,618 @@
   <title>Terrandia</title>
   <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Skaberson/test123/main/images/icon2.png">
   <style>
-    html, body { margin: 0; padding: 0; overflow: hidden; background: #222;}
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      overflow: hidden; 
+      background: #222;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Courier New', monospace;
+    }
+    
+    #gameContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+    
+    #game {
+      display: block;
+      background: #223366;
+      width: 120%;
+      height: 120%;
+    }
+    
+    #fullscreenButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 100;
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border: 1px solid #fffd7f;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    
+    #fullscreenButton:hover {
+      background: rgba(0,0,0,0.9);
+    }
+    
+    /* Terraria-style inventory panel */
     #inventoryPanel {
-      position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
-      background: rgba(16,16,24,0.97); color: #fff; font-family: monospace;
-      border: 2px solid #fffd7f; border-radius: 8px; min-width: 270px;
-      padding: 18px 30px 18px 30px; z-index: 10; display: none;
-      box-shadow: 0 8px 32px #000a;
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 40, 0.95); 
+      color: #fff; 
+      font-family: 'Courier New', monospace;
+      border: 3px solid #8B4513;
+      border-radius: 8px; 
+      width: 320px;
+      height: 400px;
+      z-index: 10; 
+      display: none;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      box-sizing: border-box;
     }
-    #inventoryPanel h2 { margin: 0 0 10px 0; font-size: 18px; text-align: center;}
-    #inventoryItems { font-size: 16px; letter-spacing: 1px;}
+    
+    #inventoryPanel h2 { 
+      margin: 0 0 10px 0; 
+      font-size: 18px; 
+      text-align: center;
+      color: #FFD700;
+      text-shadow: 0 0 4px #000;
+      border-bottom: 2px solid #8B4513;
+      padding-bottom: 5px;
+    }
+    
+    #inventorySlots {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 4px;
+      height: 200px;
+      padding: 5px;
+    }
+    
+    .inventory-slot {
+      background: #222;
+      border: 2px solid #555;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .inventory-slot:hover {
+      border-color: #FFD700;
+      background: #333;
+    }
+    
+    .inventory-slot.selected {
+      border-color: #FFD700;
+      background: #444;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+    }
+    
+    .slot-item {
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      border: 1px solid #888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    
+    .slot-count {
+      font-size: 10px;
+      color: #FFD700;
+      text-shadow: 0 0 2px #000;
+    }
+    
+    .slot-key {
+      position: absolute;
+      top: 1px;
+      right: 2px;
+      font-size: 8px;
+      color: #FFD700;
+      opacity: 0.8;
+    }
+    
+    /* Terraria-style crafting panel */
+    #craftingPanel {
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 40, 0.95); 
+      color: #fff; 
+      font-family: 'Courier New', monospace;
+      border: 3px solid #8B4513;
+      border-radius: 8px; 
+      width: 400px;
+      height: 450px;
+      z-index: 15; 
+      display: none;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    
+    #craftingPanel h2 { 
+      margin: 0 0 10px 0; 
+      font-size: 18px; 
+      text-align: center;
+      color: #FFD700;
+      text-shadow: 0 0 4px #000;
+      border-bottom: 2px solid #8B4513;
+      padding-bottom: 5px;
+    }
+    
+    #craftingRecipes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 380px;
+      overflow-y: auto;
+      padding: 5px;
+    }
+    
+    .recipe-item {
+      background: rgba(40, 40, 50, 0.7);
+      border: 2px solid #555;
+      border-radius: 4px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .recipe-item:hover {
+      border-color: #FFD700;
+      background: rgba(50, 50, 60, 0.9);
+    }
+    
+    .recipe-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      border: 1px solid #888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      background: #333;
+    }
+    
+    .recipe-details {
+      flex: 1;
+    }
+    
+    .recipe-name {
+      font-weight: bold;
+      color: #FFD700;
+      margin-bottom: 3px;
+    }
+    
+    .recipe-ingredients {
+      font-size: 12px;
+      color: #aaa;
+    }
+    
+    .recipe-result {
+      font-size: 12px;
+      color: #FFD700;
+      font-weight: bold;
+    }
+    
+    #craftingPanel .close-btn {
+      position: absolute; 
+      top: 10px; 
+      right: 10px; 
+      background: none; 
+      border: none; 
+      color: #fff; 
+      cursor: pointer;
+      font-size: 16px; 
+      width: 24px; 
+      height: 24px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+    
+    #craftingPanel .close-btn:hover {
+      background: rgba(255, 0, 0, 0.3);
+    }
+    
+    /* Admin panel */
+    #adminPanel {
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      background: rgba(10, 10, 20, 0.95); 
+      color: #fff; 
+      font-family: 'Courier New', monospace;
+      border: 3px solid #7fffd4;
+      border-radius: 8px; 
+      width: 350px;
+      height: 400px;
+      z-index: 30; 
+      display: none;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    
+    #adminPanel h3 { 
+      margin: 0 0 15px 0; 
+      font-size: 18px; 
+      text-align: center; 
+      color: #bfffdc;
+      text-shadow: 0 0 4px #000;
+    }
+    
+    #adminPanel .row { 
+      display:flex; 
+      gap:10px; 
+      align-items:center; 
+      margin:8px 0; 
+    }
+    
+    #adminPanel label { 
+      flex:1; 
+      font-size:14px; 
+      opacity:0.9; 
+    }
+    
+    #adminPanel input[type="text"], #adminPanel input[type="password"] {
+      background:#141416; 
+      color:#fff; 
+      border:2px solid #555; 
+      padding:6px 8px; 
+      border-radius:4px; 
+      min-width:130px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    #adminPanel button {
+      background: linear-gradient(#1b5,#0a6); 
+      border:2px solid #083; 
+      color:#012; 
+      padding:6px 8px; 
+      border-radius:4px; 
+      cursor:pointer;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+    }
+    
+    #adminPanel .danger {
+      background: linear-gradient(#f66,#d33); 
+      border:2px solid #b11; 
+      color:#fff;
+    }
+    
+    #adminPanel .checkbox { 
+      transform: translateY(2px); 
+    }
+    
+    #adminMessage { 
+      font-size:13px; 
+      color:#dff; 
+      opacity:0.95; 
+      text-align:center; 
+      margin-top:8px; 
+      padding: 5px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+    
+    #adminLogin { 
+      display:block; 
+    }
+    
+    #adminControls { 
+      display:none; 
+    }
+    
+    /* Character customization panel */
+    #characterPanel {
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 40, 0.95); 
+      color: #fff; 
+      font-family: 'Courier New', monospace;
+      border: 3px solid #8B4513;
+      border-radius: 8px; 
+      width: 400px;
+      height: 350px;
+      z-index: 20; 
+      display: none;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    
+    #characterPanel h2 { 
+      margin: 0 0 15px 0; 
+      font-size: 18px; 
+      text-align: center;
+      color: #FFD700;
+      text-shadow: 0 0 4px #000;
+      border-bottom: 2px solid #8B4513;
+      padding-bottom: 5px;
+    }
+    
+    #characterPreview {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 15px;
+      background: #222;
+      border: 2px solid #555;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    #characterPreview img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    
+    #characterUrlInput {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      background: #141416;
+      color: #fff;
+      border: 2px solid #555;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    #characterPanel .close-btn {
+      position: absolute; 
+      top: 10px; 
+      right: 10px; 
+      background: none; 
+      border: none; 
+      color: #fff; 
+      cursor: pointer;
+      font-size: 16px; 
+      width: 24px; 
+      height: 24px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+    
+    #characterPanel .close-btn:hover {
+      background: rgba(255, 0, 0, 0.3);
+    }
+    
+    /* Hotbar */
     #hotbar {
-      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 6px; z-index: 5; pointer-events: none;
+      position: absolute; 
+      bottom: 20px; 
+      left: 50%; 
+      transform: translateX(-50%);
+      display: flex; 
+      gap: 4px; 
+      z-index: 5; 
+      pointer-events: none;
     }
+    
     .hotbar-slot {
-      width: 38px; height: 38px; border-radius: 7px; border: 2.3px solid #888;
-      background: #222c; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      font-family: monospace; font-size: 13px; font-weight: bold; color: #fff; 
-      position: relative; transition: border 0.1s, background 0.1s;
+      width: 100px; 
+      height: 100px; 
+      border-radius: 6px; 
+      border: 2px solid #888;
+      background: #222c; 
+      box-sizing: border-box; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center;
+      font-family: 'Courier New', monospace; 
+      font-size: 14px; 
+      font-weight: bold; 
+      color: #fff; 
+      position: relative; 
+      transition: border 0.1s, background 0.1s;
       user-select: none;
+      cursor: pointer;
     }
-    .hotbar-slot.selected { border: 2.8px solid #fffd7f; background: #242d; pointer-events: auto; cursor: pointer;}
+    
+    .hotbar-slot.selected { 
+      border: 2.8px solid #FFD700; 
+      background: #242d; 
+      pointer-events: auto; 
+    }
+    
     .hotbar-slot .slot-key {
-      position: absolute; top: 1px; right: 2px; font-size: 10px; color: #fff7a7; opacity: 0.65;
+      position: absolute; 
+      top: 4px; 
+      right: 5px; 
+      font-size: 4px; 
+      color: #FFD700; 
+      opacity: 0.8;
     }
+    
     .hotbar-slot .slot-count {
-      position: absolute; bottom: 2px; right: 4px; font-size: 11px; color: #fff;
-      text-shadow: 0 0 2px #000,0 0 4px #000;
+      position: absolute; 
+      bottom: 2px; 
+      right: 4px; 
+      font-size: 40px; 
+      color: #FFD700;
+      text-shadow: 0 0 2px #000;
       font-weight: normal;
     }
+    
     .hotbar-slot .slot-swatch {
-      width: 18px; height: 18px; border-radius: 3px; margin-top: 7px;
+      width: 20px; 
+      height: 20px; 
+      border-radius: 3px; 
+      margin-top: 8px;
       border: 1.2px solid #888;
       margin-bottom: 3px;
       box-sizing: border-box;
     }
-    canvas { display: block; background: #223366; }
-
-
-    /* Admin panel */
-    #adminPanel {
-      position: absolute; top: 72px; left: 50%; transform: translateX(-50%);
-      background: rgba(6,6,10,0.98); color: #fff; font-family: monospace;
-      border: 2px solid #7fffd4; border-radius: 10px; min-width: 320px;
-      padding: 18px 22px; z-index: 30; display: none;
-      box-shadow: 0 12px 48px #000a;
+    
+    /* Small helper notes */
+    .hint { 
+      font-size:12px; 
+      opacity:0.7; 
+      margin-top:6px; 
+      text-align:center; 
     }
-    #adminPanel h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; color: #bfffdc;}
-    #adminPanel .row { display:flex; gap:10px; align-items:center; margin:8px 0; }
-    #adminPanel label { flex:1; font-size:14px; opacity:0.9; }
-    #adminPanel input[type="text"], #adminPanel input[type="password"] {
-      background:#141416; color:#fff; border:1px solid #555; padding:6px 8px; border-radius:6px; min-width:130px;
+    
+    /* Scrollbar styling */
+    #craftingRecipes::-webkit-scrollbar {
+      width: 8px;
     }
-    #adminPanel button {
-      background: linear-gradient(#1b5,#0a6); border:1px solid #083; color:#012; padding:6px 8px; border-radius:6px; cursor:pointer;
+    
+    #craftingRecipes::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
     }
-    #adminPanel .danger {
-      background: linear-gradient(#f66,#d33); border:1px solid #b11; color:#fff;
+    
+    #craftingRecipes::-webkit-scrollbar-thumb {
+      background: #8B4513;
+      border-radius: 4px;
     }
-    #adminPanel .checkbox { transform: translateY(2px); }
-    #adminMessage { font-size:13px; color:#dff; opacity:0.95; text-align:center; margin-top:8px; }
-    #adminLogin { display:block; }
-    #adminControls { display:none; }
-
-
-    /* small helper notes */
-    .hint { font-size:12px; opacity:0.7; margin-top:6px; text-align:center; }
+    
+    #craftingRecipes::-webkit-scrollbar-thumb:hover {
+      background: #FFD700;
+    }
   </style>
 </head>
 <body>
-  <div id="inventoryPanel">
-    <h2>Inventory <span style="font-size:12px;opacity:.6">(press I to close)</span></h2>
-    <div id="inventoryItems"></div>
-  </div>
+  <!-- Add health bar display -->
+<div id="healthBarContainer" style="position: absolute; top: 20px; left: 20px; width: 200px; height: 20px; background: rgba(0,0,0,0.5); border: 2px solid #888; border-radius: 4px; z-index: 100;">
+  <div id="healthBar" style="height: 100%; width: 100%; background: linear-gradient(to right, #ff0000, #ff6600); border-radius: 2px; transition: width 0.3s;"></div>
+  <div id="healthText" style="position: absolute; top: 0; left: 0; width: 100%; text-align: center; color: white; font-family: 'Courier New', monospace; font-size: 12px; text-shadow: 1px 1px 1px black;">100%</div>
+</div>
 
+<!-- Add fall damage indicator -->
+<div id="fallDamageIndicator" style="position: absolute; top: 50px; left: 20px; color: #ff5555; font-family: 'Courier New', monospace; font-size: 14px; opacity: 0; transition: opacity 0.3s; z-index: 100;">
+  Fall Damage: 0
+</div>
 
-  <!-- Admin panel -->
-  <div id="adminPanel" aria-hidden="true">
-    <h3>Admin Console</h3>
-
-
-    <div id="adminLogin">
-      <div class="row">
-        <label>Password:</label>
-        <input id="adminPassword" type="password" placeholder="enter password" />
-        <button id="adminLoginBtn">Login</button>
-      </div>
-      <div class="hint">Press P to open this panel. Password required.</div>
-      <div id="adminLoginMsg" class="hint" style="color:#f88"></div>
+  <div id="gameContainer">
+    <canvas id="game" tabindex="0"></canvas>
+    <button id="fullscreenButton">Toggle Fullscreen</button>
+    
+    <!-- Inventory Panel -->
+    <div id="inventoryPanel">
+      <h2>Inventory</h2>
+      <div id="inventorySlots"></div>
     </div>
 
-
-    <div id="adminControls">
-      <div class="row">
-        <label>Enable Dynamine (instant 3x3 mining)</label>
-        <input id="dynamineToggle" class="checkbox" type="checkbox" />
-      </div>
-      <div class="row">
-        <label>Enable Noclip (walk through blocks)</label>
-        <input id="noclipToggle" class="checkbox" type="checkbox" />
-      </div>
-      <div class="row">
-        <label>Enable Fly (disable gravity; use W/S to move up/down)</label>
-        <input id="flyToggle" class="checkbox" type="checkbox" />
-      </div>
-      <div class="row">
-        <label>Give 99 of selected hotbar item</label>
-        <button id="give99Btn">Give 99</button>
-      </div>
-      <div class="row">
-        <label>Teleport to spawn (0, surface)</label>
-        <button id="teleportBtn">Teleport</button>
-      </div>
-      <div class="row">
-        <label>Clear nearby blocks 5x5 (centered)</label>
-        <button id="clear5Btn">Clear 5x5</button>
-      </div>
-
-
-      <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
-        <button id="closeAdminBtn">Close</button>
-        <button id="logoutAdminBtn" class="danger">Logout</button>
-      </div>
-
-
-      <div id="adminMessage"></div>
+    <!-- Crafting Panel -->
+    <div id="craftingPanel">
+      <button class="close-btn" id="closeCrafting">✕</button>
+      <h2>Crafting</h2>
+      <div id="craftingRecipes"></div>
     </div>
+
+    <!-- Character Customization Panel -->
+    <div id="characterPanel">
+      <button class="close-btn" id="closeCharacter">✕</button>
+      <h2>Character Customization</h2>
+      <div id="characterPreview">
+        <img id="characterPreviewImg" src="" alt="Character Preview">
+      </div>
+      <div class="hint">Select a character preset</div>
+      <div id="characterPresets">
+        <button class="preset-btn" data-preset="default">Default</button>
+        <button class="preset-btn" data-preset="warrior">Warrior</button>
+        <button class="preset-btn" data-preset="mage">Mage</button>
+        <button class="preset-btn" data-preset="archer">Archer</button>
+      </div>
+    </div>
+
+    <!-- Admin panel -->
+    <div id="adminPanel" aria-hidden="true">
+      <h3>Admin Console</h3>
+
+      <div id="adminLogin">
+        <div class="row">
+          <label>Password:</label>
+          <input id="adminPassword" type="password" placeholder="enter password" />
+          <button id="adminLoginBtn">Login</button>
+        </div>
+        <div class="hint">Press P to open this panel. Password required.</div>
+        <div id="adminLoginMsg" class="hint" style="color:#f88"></div>
+      </div>
+
+      <div id="adminControls">
+        <div class="row">
+          <label>Enable Dynamine (instant 3x3 mining)</label>
+          <input id="dynamineToggle" class="checkbox" type="checkbox" />
+        </div>
+        <div class="row">
+          <label>Enable Noclip (walk through blocks)</label>
+          <input id="noclipToggle" class="checkbox" type="checkbox" />
+        </div>
+        <div class="row">
+          <label>Enable Fly (disable gravity; use W/S to move up/down)</label>
+          <input id="flyToggle" class="checkbox" type="checkbox" />
+        </div>
+        <div class="row">
+          <label>Give 99 of selected hotbar item</label>
+          <button id="give99Btn">Give 99</button>
+        </div>
+        <div class="row">
+          <label>Teleport to spawn (0, surface)</label>
+          <button id="teleportBtn">Teleport</button>
+        </div>
+        <div class="row">
+          <label>Clear nearby blocks 5x5 (centered)</label>
+          <button id="clear5Btn">Clear 5x5</button>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+          <button id="closeAdminBtn">Close</button>
+          <button id="logoutAdminBtn" class="danger">Logout</button>
+        </div>
+
+        <div id="adminMessage"></div>
+      </div>
+    </div>
+
+    <div id="hotbar"></div>
   </div>
-
-
-  <div id="hotbar"></div>
-  <canvas id="game" tabindex="0"></canvas>
+  
   <script>
     // --- Config ---
-    const BLOCK_SIZE = 24;
-    const BLOCK_SCALE = 1.03;
+    const BLOCK_SIZE = 87;
+    const BLOCK_SCALE = 1.01;
     const BACKGROUND_BLOCK_SCALE = 2.0;
     const CAMERA_WIDTH = 16;
     const CAMERA_HEIGHT = 9;
@@ -151,13 +627,10 @@
     const TICK = 1/60;
     const CHUNK_SIZE = 32;
     const MINE_REACH = 5;
-    let RENDER_SCALE = 1; // Add this at the top with other global variables
-
-
+    let RENDER_SCALE = 1;
 
     // Admin password (as requested)
     const ADMIN_PASSWORD = "ultragaming";
-
 
     // --- Underworld layers config ---
     const UNDERWORLD_LAYERS = [
@@ -167,7 +640,6 @@
       { name: "tartarus", y: -450, height: 14, bg: "tartarus_bg" },
       { name: "hades_house", y: -500, height: 20, bg: "hades_bg" }
     ];
-
 
     // --- Block toughness for mining speed (seconds to mine) ---
     const TOUGHNESS = {
@@ -202,7 +674,6 @@
       hades_bg: 0
     };
 
-
     // --- Block colors (fallback) ---
     const COLORS = {
       air: "#223366",
@@ -236,7 +707,6 @@
       hades_bg: "#111111"
     };
 
-
     // --- Block images (edit these for custom textures!) ---
     const BLOCK_IMAGES = {
       grass: "https://raw.githubusercontent.com/Skaberson/test123/main/images/grass.png",
@@ -246,14 +716,14 @@
       clay: "https://raw.githubusercontent.com/Skaberson/test123/main/images/clay.png",
       snow: "https://raw.githubusercontent.com/Skaberson/test123/main/images/newsnow.png",
       hotstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hotstone.png",
-      magma: "",
-      lava: "",
+      magma: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+      lava: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
       leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/images/leaves_00.png",
       wood: "https://raw.githubusercontent.com/Skaberson/test123/main/images/wood_0.png",
       brick: "",
-      ore: "",
+      ore: "https://raw.githubusercontent.com/Skaberson/test123/main/images/ironore.png",
       cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
-      hellstone: "",
+      hellstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hellstone.png",
       styx_temple: "",
       elysium: "",
       asphodel: "",
@@ -267,16 +737,13 @@
       hades_bg: ""
     };
 
-
     // --- Hotbar blocks (no unminable backgrounds) ---
     const HOTBAR_BLOCKS = [
-      "dirt", "stone", "sand", "clay", "snow", "hotstone", "magma", "wood", "brick", "cloud"
+      "dirt", "stone", "sand", "clay", "snow", "hellstone", "magma", "wood", "brick", "cloud"
     ];
-
 
     // --- Crack texture image (set this to your texture's URL) ---
     const CRACK_IMAGE_URL = "https://raw.githubusercontent.com/Skaberson/Terrandia/main/images/crack.png";
-
 
     // --- Preload images and track status ---
     const imageCache = {};
@@ -298,7 +765,6 @@
     crackImg.src = CRACK_IMAGE_URL;
     let crackLoaded = false;
     crackImg.onload = () => { crackLoaded = true; };
-
 
     // --- PRNG and Noise ---
     function mulberry32(a) {
@@ -322,7 +788,6 @@
       return lerp(l, r, smoothstep(xf));
     }
 
-
     // --- Biomes ---
     function getBiome(x) {
       const bseed = 234567;
@@ -338,12 +803,11 @@
       }
     }
 
-
     // --- Infinite World Storage ---
     let world = {};
     let background = {};  // stores background blocks
     // Replace the hardcoded seed with a random one
-const seed = Math.floor(Math.random() * 1000000);
+    const seed = Math.floor(Math.random() * 1000000);
     function getBlock(x, y) {
       const key = x + "," + y;
       if(world.hasOwnProperty(key)) return world[key];
@@ -361,7 +825,6 @@ const seed = Math.floor(Math.random() * 1000000);
       background[x+','+y] = type;
     }
 
-
     // --- Greek Underworld Layer Generation ---
     function isUnderworldLayer(y) {
       for (const layer of UNDERWORLD_LAYERS) {
@@ -370,7 +833,6 @@ const seed = Math.floor(Math.random() * 1000000);
       }
       return null;
     }
-
 
     // --- Sky Islands Helper ---
     function generateSkyIsland(x, y) {
@@ -389,7 +851,6 @@ const seed = Math.floor(Math.random() * 1000000);
       }
     }
 
-
     function cave2D(x, y, biome, surf) {
       if (y <= surf + 70) return false;
       let caveNoise = perlin1d(x/8 + y/16, 777+biome.name.length)*0.6
@@ -402,13 +863,11 @@ const seed = Math.floor(Math.random() * 1000000);
       return (caveNoise > caveProb) || (tunnelNoise > tunnelProb);
     }
 
-
     function generateChunk(cx, cy) {
       for(let dx=0; dx<CHUNK_SIZE; dx++) {
         let x = cx * CHUNK_SIZE + dx;
         const biome = getBiome(x);
         let h = Math.floor(GROUND_LEVEL + perlin1d(x/8, seed)*7 + perlin1d(x/2, seed*2)*3 + perlin1d(x/18, seed*biome.name.length)*2);
-
 
         let skyY = h - 100;
         if (cy === Math.floor(skyY / CHUNK_SIZE)) {
@@ -418,12 +877,10 @@ const seed = Math.floor(Math.random() * 1000000);
           }
         }
 
-
         for(let dy=0; dy<CHUNK_SIZE; dy++) {
           let y = cy * CHUNK_SIZE + dy;
           let key = x + "," + y;
           if(world.hasOwnProperty(key)) continue;
-
 
           // --- Greek Underworld Layers ---
           let layer = isUnderworldLayer(y);
@@ -439,7 +896,6 @@ const seed = Math.floor(Math.random() * 1000000);
             world[key] = type;
             continue;
           }
-
 
           // --- Normal terrain generation ---
           let type = "air";
@@ -479,7 +935,6 @@ const seed = Math.floor(Math.random() * 1000000);
           }
           world[key] = type;
 
-
           // --- Background logic: 5 blocks below surface level, darker stone background
           if (y >= h + 5 && y < h + 10 && type !== 'air') {
             setBackground(x, y, "darkstone_bg");
@@ -487,7 +942,6 @@ const seed = Math.floor(Math.random() * 1000000);
         }
       }
     }
-
 
     function ensureWorldGenerated(camX, camY) {
       let left = Math.floor(camX - CAMERA_WIDTH/2);
@@ -508,12 +962,10 @@ const seed = Math.floor(Math.random() * 1000000);
       }
     }
 
-
     // --- Canvas Setup ---
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-
 
     function resizeCanvas() {
       const DPR = window.devicePixelRatio || 1;
@@ -533,7 +985,6 @@ const seed = Math.floor(Math.random() * 1000000);
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-
     // --- Player ---
     let player = {
       x: 0,
@@ -543,9 +994,14 @@ const seed = Math.floor(Math.random() * 1000000);
       vx: 0, vy: 0,
       onGround: false,
       canJump: true,
-      miningCooldown: 0
+      miningCooldown: 0,
+      direction: 1, // 1 for right, -1 for left
+      characterTexture: null,
+      characterPreset: null,
+      isMoving: false,
+      animationFrame: 0,
+      lastAnimationTime: 0
     };
-
 
     function findGroundStartX(x) {
       for(let y=-CAMERA_HEIGHT; y<100; y++) {
@@ -562,13 +1018,11 @@ const seed = Math.floor(Math.random() * 1000000);
     player.x = 0;
     player.y = findGroundStartX(0);
 
-
     // --- Camera ---
     let camera = {
       x: player.x,
       y: player.y
     };
-
 
     // --- Admin state ---
     const admin = {
@@ -578,45 +1032,473 @@ const seed = Math.floor(Math.random() * 1000000);
       fly: false
     };
 
-
     // Try restore auth (so a reload won't leak password, only a saved flag)
     try {
       const saved = localStorage.getItem("terr_admin_authed");
       if (saved === "1") admin.authenticated = true;
     } catch (e) {}
 
-
-    // --- Inventory logic ---
-    let inventory = {};
-    for(const k of HOTBAR_BLOCKS) inventory[k]=10;
-    function addToInventory(blockType, amt=1) {
-      if (!inventory.hasOwnProperty(blockType)) inventory[blockType] = 0;
-      inventory[blockType] += amt;
-      updateHotbar();
+    // --- New Inventory System ---
+    class Inventory {
+      constructor() {
+        this.slots = [];
+        this.maxSlots = 40;
+        this.maxStackSize = 99;
+        this.selectedSlot = 0;
+        
+        // Initialize with default items
+        for (let i = 0; i < this.maxSlots; i++) {
+          this.slots.push({ type: null, count: 0 });
+        }
+      }
+      
+      // Add items to inventory
+      addItem(type, count = 1) {
+        // Try to stack with existing items first
+        for (let i = 0; i < this.slots.length; i++) {
+          if (this.slots[i].type === type && this.slots[i].count < this.maxStackSize) {
+            const space = this.maxStackSize - this.slots[i].count;
+            const toAdd = Math.min(count, space);
+            this.slots[i].count += toAdd;
+            count -= toAdd;
+            if (count <= 0) return true;
+          }
+        }
+        
+        // Add to new slots
+        for (let i = 0; i < this.slots.length; i++) {
+          if (this.slots[i].type === null) {
+            const toAdd = Math.min(count, this.maxStackSize);
+            this.slots[i].type = type;
+            this.slots[i].count = toAdd;
+            count -= toAdd;
+            if (count <= 0) return true;
+          }
+        }
+        
+        return false; // Inventory full
+      }
+      
+      // Remove items from inventory
+      removeItem(type, count = 1) {
+        for (let i = 0; i < this.slots.length; i++) {
+          if (this.slots[i].type === type) {
+            const toRemove = Math.min(count, this.slots[i].count);
+            this.slots[i].count -= toRemove;
+            if (this.slots[i].count <= 0) {
+              this.slots[i].type = null;
+            }
+            count -= toRemove;
+            if (count <= 0) return true;
+          }
+        }
+        return false; // Not enough items
+      }
+      
+      // Get item count
+      getItemCount(type) {
+        let count = 0;
+        for (let i = 0; i < this.slots.length; i++) {
+          if (this.slots[i].type === type) {
+            count += this.slots[i].count;
+          }
+        }
+        return count;
+      }
+      
+      // Get slot at index
+      getSlot(index) {
+        return this.slots[index];
+      }
+      
+      // Set slot at index
+      setSlot(index, type, count) {
+        this.slots[index].type = type;
+        this.slots[index].count = count;
+      }
+      
+      // Get selected slot
+      getSelectedSlot() {
+        return this.slots[this.selectedSlot];
+      }
+      
+      // Set selected slot
+      setSelectedSlot(index) {
+        if (index >= 0 && index < this.slots.length) {
+          this.selectedSlot = index;
+        }
+      }
+      
+      // Get all items for display
+      getAllItems() {
+        const items = [];
+        for (let i = 0; i < this.slots.length; i++) {
+          if (this.slots[i].type !== null) {
+            items.push({ index: i, type: this.slots[i].type, count: this.slots[i].count });
+          }
+        }
+        return items;
+      }
     }
+
+    // Create inventory instance
+    const inventory = new Inventory();
+
+    // Initialize inventory with starting items
+    inventory.addItem("dirt", 0);
+    inventory.addItem("stone", 0);
+    inventory.addItem("sand", 0);
+    inventory.addItem("clay", 0);
+    inventory.addItem("snow", 0);
+    inventory.addItem("hotstone", 0);
+    inventory.addItem("wood", 0);
+    inventory.addItem("brick", 0);
+    inventory.addItem("cloud", 0);
+
     function showInventory() {
       const invDiv = document.getElementById('inventoryPanel');
       invDiv.style.display = "block";
       updateInventoryDisplay();
     }
+    
     function hideInventory() {
       document.getElementById('inventoryPanel').style.display = "none";
     }
+    
     function updateInventoryDisplay() {
-      const itemsDiv = document.getElementById('inventoryItems');
-      let out = "";
-      let hasAny = false;
-      for(const k in inventory) {
-        if(inventory[k] > 0) {
-          out += `<span style="color:${COLORS[k]||'#fff'}">${k}</span>: <b>${inventory[k]}</b><br>`;
-          hasAny = true;
+      const slotsDiv = document.getElementById('inventorySlots');
+      slotsDiv.innerHTML = '';
+      
+      // Create 10x4 grid for inventory slots
+      for (let i = 0; i < 40; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'inventory-slot';
+        slot.dataset.index = i;
+        
+        // Add key indicator
+        const keyIndicator = document.createElement('div');
+        keyIndicator.className = 'slot-key';
+        keyIndicator.textContent = i < 9 ? i + 1 : '';
+        slot.appendChild(keyIndicator);
+        
+        const item = inventory.getSlot(i);
+        if (item.type) {
+          const itemElement = document.createElement('div');
+          itemElement.className = 'slot-item';
+          itemElement.style.background = COLORS[item.type] || '#888';
+          itemElement.textContent = item.count > 1 ? item.count : '';
+          
+          const countElement = document.createElement('div');
+          countElement.className = 'slot-count';
+          countElement.textContent = item.count > 1 ? item.count : '';
+          
+          slot.appendChild(itemElement);
+          slot.appendChild(countElement);
         }
+        
+        slot.onclick = () => {
+          // Handle slot click (for swapping items)
+          if (item.type) {
+            // For now, just show item details
+            const message = document.getElementById('adminMessage');
+            if (message) {
+              message.textContent = `Item: ${item.type} (${item.count})`;
+              setTimeout(() => {
+                if (message.textContent.includes("Item:")) {
+                  message.textContent = "";
+                }
+              }, 2000);
+            }
+          }
+        };
+        
+        slotsDiv.appendChild(slot);
       }
-      if(!hasAny) out = "<i>(empty)</i>";
-      itemsDiv.innerHTML = out;
     }
+    
     let inventoryOpen = false;
 
+    // --- Crafting System ---
+    let craftingRecipes = [];
+    let itemTextures = {};
+
+    // Load crafting data from external files
+    async function loadCraftingData() {
+      try {
+        // Load recipes
+        const recipesResponse = await fetch('crafting.json');
+        const recipesData = await recipesResponse.json();
+        craftingRecipes = recipesData.recipes || [];
+        
+        // Load textures
+        const texturesResponse = await fetch('textures.json');
+        const texturesData = await texturesResponse.json();
+        itemTextures = texturesData.textures || {};
+        
+        console.log("Crafting data loaded successfully");
+        updateCraftingDisplay();
+      } catch (error) {
+        console.error("Failed to load crafting data:", error);
+        // Fallback to default recipes
+        craftingRecipes = [
+          {
+            name: "Wooden Plank",
+            ingredients: [{ type: "wood", count: 1 }],
+            result: { type: "plank", count: 4 }
+          },
+          {
+            name: "Brick",
+            ingredients: [{ type: "clay", count: 4 }],
+            result: { type: "brick", count: 1 }
+          },
+          {
+            name: "Stone Pickaxe",
+            ingredients: [
+              { type: "stone", count: 3 },
+              { type: "wood", count: 2 }
+            ],
+            result: { type: "pickaxe", count: 1 }
+          },
+          {
+            name: "Stone Sword",
+            ingredients: [
+              { type: "stone", count: 2 },
+              { type: "wood", count: 1 }
+            ],
+            result: { type: "sword", count: 1 }
+          },
+          {
+            name: "Sandstone",
+            ingredients: [
+              { type: "sand", count: 4 }
+            ],
+            result: { type: "sandstone", count: 1 }
+          }
+        ];
+        
+        itemTextures = {
+          "plank": "#8B4513",
+          "pickaxe": "#888",
+          "sword": "#C0C0C0",
+          "sandstone": "#E8E2AA"
+        };
+        
+        updateCraftingDisplay();
+      }
+    }
+
+    function updateCraftingDisplay() {
+      const recipesDiv = document.getElementById('craftingRecipes');
+      recipesDiv.innerHTML = '';
+      
+      if (craftingRecipes.length === 0) {
+        recipesDiv.innerHTML = '<div style="text-align:center; opacity:0.7; padding:20px;">No recipes available</div>';
+        return;
+      }
+      
+      craftingRecipes.forEach(recipe => {
+        const recipeElement = document.createElement('div');
+        recipeElement.className = 'recipe-item';
+        recipeElement.innerHTML = `
+          <div class="recipe-icon" style="background:${COLORS[recipe.result.type] || itemTextures[recipe.result.type] || '#888'}">
+            ${recipe.result.count}
+          </div>
+          <div class="recipe-details">
+            <div class="recipe-name">${recipe.name}</div>
+            <div class="recipe-ingredients">
+              ${recipe.ingredients.map(ing => 
+                `${ing.count} ${ing.type}`
+              ).join(' + ')}
+            </div>
+            <div class="recipe-result">→ ${recipe.result.count} ${recipe.result.type}</div>
+          </div>
+        `;
+        
+        recipeElement.onclick = () => {
+          craftItem(recipe);
+        };
+        
+        recipesDiv.appendChild(recipeElement);
+      });
+    }
+
+    function craftItem(recipe) {
+      // Check if player has required ingredients
+      let canCraft = true;
+      for (const ingredient of recipe.ingredients) {
+        if (inventory.getItemCount(ingredient.type) < ingredient.count) {
+          canCraft = false;
+          break;
+        }
+      }
+      
+      if (!canCraft) {
+        alert("Not enough materials to craft this item!");
+        return;
+      }
+      
+      // Remove ingredients
+      for (const ingredient of recipe.ingredients) {
+        inventory.removeItem(ingredient.type, ingredient.count);
+      }
+      
+      // Add result
+      inventory.addItem(recipe.result.type, recipe.result.count);
+      
+      // Update UI
+      updateInventoryDisplay();
+      updateCraftingDisplay();
+      
+      // Show crafting success message
+      const message = document.getElementById('adminMessage');
+      if (message) {
+        message.textContent = `Crafted ${recipe.result.count} ${recipe.result.type}!`;
+        setTimeout(() => {
+          if (message.textContent.includes("Crafted")) {
+            message.textContent = "";
+          }
+        }, 3000);
+      }
+    }
+
+    function showCrafting() {
+      document.getElementById('craftingPanel').style.display = "block";
+    }
+    
+    function hideCrafting() {
+      document.getElementById('craftingPanel').style.display = "none";
+    }
+
+    // --- Character Customization (Hardcoded Presets) ---
+    const characterPresets = {
+      default: {
+        name: "Default",
+        color: "#fff1c1",
+        idleTexture: "github.com/Skaberson/Terrandia/images/character/default/Barbarian.png",
+        movingTexture: "https://raw.githubusercontent.com/Skaberson/Terrandia/main/images/character/default/Barbarianmove.gif"
+      },
+      warrior: {
+        name: "Warrior",
+        color: "#8B4513",
+        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Warrior.png",
+        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Warrior.png"
+      },
+      mage: {
+        name: "Mage",
+        color: "#4169E1",
+        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Mage.png",
+        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Mage.png"
+      },
+      archer: {
+        name: "Archer",
+        color: "#228B22",
+        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Archer.png",
+        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Archer.png"
+      }
+    };
+
+    // Preload character textures
+    const characterTextures = {};
+    for (const [presetName, preset] of Object.entries(characterPresets)) {
+      characterTextures[presetName] = {
+        idle: new window.Image(),
+        moving: new window.Image()
+      };
+      
+      // Load idle texture
+      characterTextures[presetName].idle.src = preset.idleTexture;
+      characterTextures[presetName].idle.onload = () => {
+        if (!imageCache[presetName + "_idle"]) {
+          imageCache[presetName + "_idle"] = {
+            img: characterTextures[presetName].idle,
+            loaded: true,
+            error: false
+          };
+        }
+      };
+      characterTextures[presetName].idle.onerror = () => {
+        if (!imageCache[presetName + "_idle"]) {
+          imageCache[presetName + "_idle"] = {
+            img: null,
+            loaded: false,
+            error: true
+          };
+        }
+      };
+      
+      // Load moving texture
+      characterTextures[presetName].moving.src = preset.movingTexture;
+      characterTextures[presetName].moving.onload = () => {
+        if (!imageCache[presetName + "_moving"]) {
+          imageCache[presetName + "_moving"] = {
+            img: characterTextures[presetName].moving,
+            loaded: true,
+            error: false
+          };
+        }
+      };
+      characterTextures[presetName].moving.onerror = () => {
+        if (!imageCache[presetName + "_moving"]) {
+          imageCache[presetName + "_moving"] = {
+            img: null,
+            loaded: false,
+            error: true
+          };
+        }
+      };
+    }
+
+    function applyCharacterPreset(presetName) {
+      if (characterPresets[presetName]) {
+        player.characterPreset = presetName;
+        player.characterTexture = null; // Will use color-based rendering
+        
+        // Update preview
+        updateCharacterPreview();
+        
+        // Show success message
+        const message = document.getElementById('adminMessage');
+        if (message) {
+          message.textContent = `Character preset "${characterPresets[presetName].name}" applied!`;
+          setTimeout(() => {
+            if (message.textContent.includes("Character preset")) {
+              message.textContent = "";
+            }
+          }, 3000);
+        }
+      }
+    }
+
+    function showCharacterPanel() {
+      document.getElementById('characterPanel').style.display = "block";
+      updateCharacterPreview();
+    }
+    
+    function hideCharacterPanel() {
+      document.getElementById('characterPanel').style.display = "none";
+    }
+    
+    function updateCharacterPreview() {
+      const previewImg = document.getElementById('characterPreviewImg');
+      if (player.characterPreset) {
+        const preset = characterPresets[player.characterPreset];
+        // Create a simple SVG preview
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+          <rect width="100" height="100" fill="#222"/>
+          <circle cx="50" cy="40" r="15" fill="${preset.color}"/>
+          <rect x="30" y="60" width="40" height="30" fill="${preset.color}"/>
+        </svg>`;
+        previewImg.src = "data:image/svg+xml," + encodeURIComponent(svg);
+      } else {
+        // Default character
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+          <rect width="100" height="100" fill="#222"/>
+          <circle cx="50" cy="40" r="15" fill="#fff1c1"/>
+          <rect x="30" y="60" width="40" height="30" fill="#fff1c1"/>
+        </svg>`;
+        previewImg.src = "data:image/svg+xml," + encodeURIComponent(svg);
+      }
+    }
 
     // --- Terraria-style mining reach check ---
     function isInReach(x, y) {
@@ -625,7 +1507,6 @@ const seed = Math.floor(Math.random() * 1000000);
       let dist = Math.sqrt((x+0.5-px)**2 + (y+0.5-py)**2);
       return dist <= MINE_REACH;
     }
-
 
     // --- Hotbar UI ---
     let hotbarSelected = 0;
@@ -636,46 +1517,41 @@ const seed = Math.floor(Math.random() * 1000000);
         const block = HOTBAR_BLOCKS[i];
         const slot = document.createElement('div');
         slot.className = "hotbar-slot" + (i===hotbarSelected?" selected":"");
+        const count = inventory.getItemCount(block);
         slot.innerHTML = `
           <div class="slot-key">${i+1}</div>
           <div class="slot-swatch" style="background:${COLORS[block]}"></div>
           <span>${block}</span>
-          <span class="slot-count">${inventory[block]||0}</span>
+          <span class="slot-count">${count || 0}</span>
         `;
-        slot.onclick = ()=>{ hotbarSelected = i; updateHotbar(); };
+        slot.onclick = ()=>{
+          hotbarSelected = i;
+          updateHotbar();
+        };
         hotbar.appendChild(slot);
       }
     }
     updateHotbar();
 
-
     // --- Mining and Placement with toughness & cracks ---
-   function getMouseTile(clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  const x = clientX - rect.left;
-  const y = clientY - rect.top;
-  
-  // Use the exact same scaling that's applied to the canvas
-  const transform = ctx.getTransform();
-  const scale = transform.a; // This should be DPR * RENDER_SCALE
-  
-  const blockX = Math.floor(x / (BLOCK_SIZE * scale));
-  const blockY = Math.floor(y / (BLOCK_SIZE * scale));
-  
-  // Apply offset for fullscreen mode
-  let worldX = Math.floor(camera.x - CAMERA_WIDTH / 2 + blockX);
-  let worldY = Math.floor(camera.y - CAMERA_HEIGHT / 2 + blockY);
-  
-  // Check if we're in fullscreen mode and apply offset
-  if (document.fullscreenElement) {
-    worldX -= 2; // 2 blocks left
-    worldY -= 1; // 1 block up
-  }
-  
-  return { x: worldX, y: worldY };
-}
-
-
+    function getMouseTile(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      
+      // Use the exact same scaling that's applied to the canvas
+      const transform = ctx.getTransform();
+      const scale = transform.a; // This should be DPR * RENDER_SCALE
+      
+      const blockX = Math.floor(x / (BLOCK_SIZE * scale));
+      const blockY = Math.floor(y / (BLOCK_SIZE * scale));
+      
+      // Calculate world coordinates directly without any offset
+      let worldX = Math.floor(camera.x - CAMERA_WIDTH / 2 + blockX);
+      let worldY = Math.floor(camera.y - CAMERA_HEIGHT / 2 + blockY);
+      
+      return { x: worldX, y: worldY };
+    }
 
     // Mining state: one block at a time
     let mining = {
@@ -688,15 +1564,14 @@ const seed = Math.floor(Math.random() * 1000000);
       mouseButton: null
     };
 
-
     let mouseDown = false;
     let mouseButton = null;
-
 
     function handlePlace(tile) {
       let t = getBlock(tile.x, tile.y);
       let placeBlock = HOTBAR_BLOCKS[hotbarSelected];
-      if(t === 'air' && (inventory[placeBlock]||0)>0) {
+      const count = inventory.getItemCount(placeBlock);
+      if(t === 'air' && count > 0) {
         let adjacentSolid = false;
         for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
           let nx = tile.x+dx, ny = tile.y+dy;
@@ -708,13 +1583,12 @@ const seed = Math.floor(Math.random() * 1000000);
         }
         if(adjacentSolid) {
           setBlock(tile.x, tile.y, placeBlock);
-          inventory[placeBlock]--;
+          inventory.removeItem(placeBlock, 1);
           updateHotbar();
           updateInventoryDisplay();
         }
       }
     }
-
 
     function validToMine(type) {
       if(!type) return false;
@@ -723,7 +1597,6 @@ const seed = Math.floor(Math.random() * 1000000);
       if((TOUGHNESS[type] || 0) <= 0) return false;
       return true;
     }
-
 
     function areaMine(centerX, centerY) {
       // Remove a 3x3 area centered at centerX, centerY
@@ -735,7 +1608,7 @@ const seed = Math.floor(Math.random() * 1000000);
           let t = getBlock(bx, by);
           if(validToMine(t) && isInReach(bx, by)) {
             setBlock(bx, by, 'air');
-            addToInventory(t, 1);
+            inventory.addItem(t, 1);
             removed++;
           }
         }
@@ -743,13 +1616,11 @@ const seed = Math.floor(Math.random() * 1000000);
       return removed;
     }
 
-
     function startMining(tile) {
       if (!isInReach(tile.x, tile.y)) return;
       let t = getBlock(tile.x, tile.y);
       if(!t || t === 'air' || TOUGHNESS[t] === 0 || t.endsWith("_bg")) return;
       if(mining.active && mining.x === tile.x && mining.y === tile.y) return;
-
 
       // If admin dynamine is enabled, instantly mine a 3x3 area
       if (admin.authenticated && admin.dynamine) {
@@ -765,7 +1636,6 @@ const seed = Math.floor(Math.random() * 1000000);
         return;
       }
 
-
       mining.active = true;
       mining.x = tile.x;
       mining.y = tile.y;
@@ -774,7 +1644,6 @@ const seed = Math.floor(Math.random() * 1000000);
       mining.blockType = t;
       mining.mouseButton = 0;
     }
-
 
     function stopMining() {
       mining.active = false;
@@ -785,7 +1654,6 @@ const seed = Math.floor(Math.random() * 1000000);
       mining.blockType = null;
       mining.mouseButton = null;
     }
-
 
     canvas.addEventListener('mousedown', (e)=>{
       if (inventoryOpen) return;
@@ -801,20 +1669,17 @@ const seed = Math.floor(Math.random() * 1000000);
       canvas.focus();
     });
 
-
     canvas.addEventListener('mouseup', ()=>{
       mouseDown = false;
       mouseButton = null;
       stopMining();
     });
 
-
     canvas.addEventListener('mouseleave', ()=>{
       mouseDown = false;
       mouseButton = null;
       stopMining();
     });
-
 
     canvas.addEventListener('mousemove', (e)=>{
       if (inventoryOpen) return;
@@ -831,9 +1696,7 @@ const seed = Math.floor(Math.random() * 1000000);
       }
     });
 
-
     canvas.addEventListener('contextmenu', e=>e.preventDefault());
-
 
     // --- Controls ---
     let left = false, right = false, up = false, down = false, jumpRequest = false;
@@ -846,25 +1709,16 @@ const seed = Math.floor(Math.random() * 1000000);
       }
       if(e.key==='ArrowDown' || e.key==='s' || e.key==='S') down = true;
       if(e.key===' ' ) { up = true; jumpRequest = true; }
-      if(e.key==='f' || e.key==='F') {
-        if (!document.fullscreenElement) {
-          if(canvas.requestFullscreen) canvas.requestFullscreen();
-          else if(canvas.webkitRequestFullscreen) canvas.webkitRequestFullscreen();
-          else if(canvas.mozRequestFullScreen) canvas.mozRequestFullScreen();
-          else if(canvas.msRequestFullscreen) canvas.msRequestFullscreen();
-          setTimeout(()=>canvas.focus(), 100);
-        } else {
-          if(document.exitFullscreen) document.exitFullscreen();
-          else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
-          else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
-          else if(document.msExitFullscreen) document.msExitFullscreen();
-          setTimeout(()=>canvas.focus(), 100);
-        }
-      }
       if(e.key==='i' || e.key==='I') {
         inventoryOpen = !inventoryOpen;
         if(inventoryOpen) showInventory();
         else hideInventory();
+      }
+      if(e.key==='c' || e.key==='C') {
+        showCrafting();
+      }
+      if(e.key==='x' || e.key==='X') {
+        showCharacterPanel();
       }
       // Admin panel toggle (press P)
       if(e.key==='p' || e.key==='P') {
@@ -887,14 +1741,12 @@ const seed = Math.floor(Math.random() * 1000000);
     document.addEventListener('keydown', handleKeydown);
     document.addEventListener('keyup', handleKeyup);
 
-
     function isSolid(x, y) {
       // Admin noclip bypasses solidity
       if (admin.authenticated && admin.noclip) return false;
       let t = getBlock(x, y);
       return t && t !== 'air' && !t.endsWith("_bg");
     }
-
 
     function collideAABB(px, py, vx, vy, w, h) {
       let nx = px, ny = py;
@@ -945,11 +1797,9 @@ const seed = Math.floor(Math.random() * 1000000);
       return {x: nx, y: ny, onGround};
     }
 
-
     let jumpActive = false;
     let jumpTimer = 0;
     const JUMP_DURATION = 0.34;
-
 
     function update() {
       ensureWorldGenerated(camera.x, camera.y);
@@ -958,6 +1808,19 @@ const seed = Math.floor(Math.random() * 1000000);
       if(right) targetVx += MOVE_SPEED;
       player.vx += (targetVx - player.vx) * 0.25;
 
+      // Update player direction based on movement
+      if (right) player.direction = 1;
+      if (left) player.direction = -1;
+
+      // Update movement state for animation
+      player.isMoving = (left || right) && !player.onGround;
+      
+      // Update animation frame
+      const now = performance.now();
+      if (now - player.lastAnimationTime > 150) { // Update every 150ms
+        player.animationFrame = (player.animationFrame + 1) % 2;
+        player.lastAnimationTime = now;
+      }
 
       // Admin fly handling
       if (admin.authenticated && admin.fly) {
@@ -986,11 +1849,9 @@ const seed = Math.floor(Math.random() * 1000000);
         player.vy = vy;
       }
 
-
       if (admin.authenticated && admin.fly) {
         // use already-set player.vy from fly handling
       }
-
 
       let move = collideAABB(player.x, player.y, player.vx*TICK, player.vy*TICK, player.w, player.h);
       player.x = move.x;
@@ -1001,13 +1862,11 @@ const seed = Math.floor(Math.random() * 1000000);
         jumpActive = false;
       }
 
-
       player.y = Math.max(-CAMERA_HEIGHT, player.y);
       let camTargetX = player.x;
       let camTargetY = player.y;
       camera.x += (camTargetX - camera.x) * 0.12;
       camera.y += (camTargetY - camera.y) * 0.12;
-
 
       // Mining completion handling
       if (mining.active && mining.duration != null) {
@@ -1019,7 +1878,7 @@ const seed = Math.floor(Math.random() * 1000000);
             // normal single-block mining
             if (mining.blockType) {
               setBlock(mining.x, mining.y, 'air');
-              addToInventory(mining.blockType, 1);
+              inventory.addItem(mining.blockType, 1);
             }
           } else {
             // If admin had dynamine, we already did areaMine on start; but in case mining was set as short duration,
@@ -1030,12 +1889,78 @@ const seed = Math.floor(Math.random() * 1000000);
       }
     }
 
+    function drawPlayer() {
+      let camX = camera.x - CAMERA_WIDTH/2;
+      let camY = camera.y - CAMERA_HEIGHT/2;
+      
+      let sx = (player.x - camX - player.w/2) * BLOCK_SIZE;
+      let sy = (player.y - camY) * BLOCK_SIZE;
+      
+      // Draw character with preset if available
+      if (player.characterPreset) {
+        const preset = characterPresets[player.characterPreset];
+        
+        // Check if we have a texture to use
+        const idleTexture = imageCache[player.characterPreset + "_idle"];
+        const movingTexture = imageCache[player.characterPreset + "_moving"];
+        
+        if (idleTexture && idleTexture.loaded && movingTexture && movingTexture.loaded) {
+          // Draw the appropriate texture based on movement state
+          const texture = player.isMoving ? movingTexture.img : idleTexture.img;
+          const width = player.w * BLOCK_SIZE;
+          const height = player.h * BLOCK_SIZE;
+          
+          // Flip the image based on direction
+          ctx.save();
+          if (player.direction === -1) {
+            ctx.translate(sx + width, 0);
+            ctx.scale(-1, 1);
+          }
+          ctx.drawImage(texture, sx, sy, width, height);
+          ctx.restore();
+        } else {
+          // Fallback to color rendering
+          // Draw character with animation
+          if (player.isMoving) {
+            // Use moving animation (alternating frames)
+            if (player.animationFrame === 0) {
+              // Draw moving frame
+              ctx.fillStyle = preset.color;
+              ctx.fillRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+              ctx.strokeStyle = "#000";
+              ctx.lineWidth = 2;
+              ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+            } else {
+              // Draw idle frame
+              ctx.fillStyle = preset.color;
+              ctx.fillRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+              ctx.strokeStyle = "#000";
+              ctx.lineWidth = 2;
+              ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+            }
+          } else {
+            // Draw idle frame
+            ctx.fillStyle = preset.color;
+            ctx.fillRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+          }
+        }
+      } else {
+        // Draw default player if no preset
+        ctx.fillStyle = COLORS.player;
+        ctx.fillRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+      }
+    }
 
     function draw() {
       let camX = camera.x - CAMERA_WIDTH/2;
       let camY = camera.y - CAMERA_HEIGHT/2;
       ctx.clearRect(0,0,canvas.width,canvas.height);
-
 
       // Draw background blocks, then foreground blocks
       let left = Math.floor(camX), top = Math.floor(camY);
@@ -1101,15 +2026,10 @@ const seed = Math.floor(Math.random() * 1000000);
           }
         }
       }
-      let sx = (player.x - camX - player.w/2) * BLOCK_SIZE;
-      let sy = (player.y - camY) * BLOCK_SIZE;
-      ctx.fillStyle = COLORS.player;
-      ctx.fillRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sx, sy, player.w*BLOCK_SIZE, player.h*BLOCK_SIZE);
+      
+      // Draw player
+      drawPlayer();
     }
-
 
     function loop() {
       update();
@@ -1118,7 +2038,53 @@ const seed = Math.floor(Math.random() * 1000000);
     }
     loop();
 
+    // ----------------
+    // Fullscreen toggle
+    // ----------------
+    const fullscreenButton = document.getElementById('fullscreenButton');
+    fullscreenButton.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
 
+    // Handle fullscreen change to maintain proper layout
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        // In fullscreen mode, make canvas fill the screen properly
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        resizeCanvas();
+      } else {
+        // Exit fullscreen - restore normal sizing
+        resizeCanvas();
+      }
+    });
+
+    // ----------------
+    // Character Panel Controls
+    // ----------------
+    document.getElementById('closeCharacter').addEventListener('click', hideCharacterPanel);
+    
+    // Add event listeners for character presets
+    document.querySelectorAll('.preset-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const preset = button.dataset.preset;
+        applyCharacterPreset(preset);
+      });
+    });
+
+    // ----------------
+    // Crafting UI Controls
+    // ----------------
+    document.getElementById('closeCrafting').addEventListener('click', hideCrafting);
+    
     // ----------------
     // Admin panel logic
     // ----------------
@@ -1130,7 +2096,6 @@ const seed = Math.floor(Math.random() * 1000000);
     const adminLoginMsg = document.getElementById('adminLoginMsg');
     const adminMessage = document.getElementById('adminMessage');
 
-
     const dynamineToggle = document.getElementById('dynamineToggle');
     const noclipToggle = document.getElementById('noclipToggle');
     const flyToggle = document.getElementById('flyToggle');
@@ -1139,7 +2104,6 @@ const seed = Math.floor(Math.random() * 1000000);
     const closeAdminBtn = document.getElementById('closeAdminBtn');
     const logoutAdminBtn = document.getElementById('logoutAdminBtn');
     const clear5Btn = document.getElementById('clear5Btn');
-
 
     // initialize toggles from admin state
     function refreshAdminUI() {
@@ -1157,7 +2121,6 @@ const seed = Math.floor(Math.random() * 1000000);
       }
     }
     refreshAdminUI();
-
 
     function openAdminPanel() {
       adminPanel.style.display = "block";
@@ -1181,7 +2144,6 @@ const seed = Math.floor(Math.random() * 1000000);
       }
     }
 
-
     adminLoginBtn.addEventListener('click', ()=>{
       const val = adminPasswordInput.value || "";
       if (val === ADMIN_PASSWORD) {
@@ -1194,7 +2156,6 @@ const seed = Math.floor(Math.random() * 1000000);
         adminLoginMsg.textContent = "Incorrect password.";
       }
     });
-
 
     dynamineToggle.addEventListener('change', (e)=>{
       admin.dynamine = !!e.target.checked;
@@ -1209,15 +2170,13 @@ const seed = Math.floor(Math.random() * 1000000);
       adminMessage.textContent = "Fly " + (admin.fly ? "enabled" : "disabled") + ".";
     });
 
-
     give99Btn.addEventListener('click', ()=>{
       const block = HOTBAR_BLOCKS[hotbarSelected];
-      inventory[block] = (inventory[block] || 0) + 99;
+      inventory.addItem(block, 99);
       updateHotbar();
       updateInventoryDisplay();
       adminMessage.textContent = `Gave 99 x ${block}.`;
     });
-
 
     teleportBtn.addEventListener('click', ()=>{
       player.x = 0;
@@ -1226,7 +2185,6 @@ const seed = Math.floor(Math.random() * 1000000);
       camera.y = player.y;
       adminMessage.textContent = "Teleported to spawn.";
     });
-
 
     clear5Btn.addEventListener('click', ()=>{
       // Clear a 5x5 centered around the player's targeted tile (mouse) or player pos if mouse outside
@@ -1241,12 +2199,11 @@ const seed = Math.floor(Math.random() * 1000000);
         let t = getBlock(bx, by);
         if(validToMine(t)) {
           setBlock(bx, by, 'air');
-          addToInventory(t, 1);
+          inventory.addItem(t, 1);
         }
       }
       adminMessage.textContent = "Cleared 5x5 and added removed blocks to inventory.";
     });
-
 
     closeAdminBtn.addEventListener('click', ()=>{ closeAdminPanel(); });
     logoutAdminBtn.addEventListener('click', ()=>{
@@ -1259,136 +2216,18 @@ const seed = Math.floor(Math.random() * 1000000);
       refreshAdminUI();
     });
 
-
     // Small UX: press Enter in password field
     adminPasswordInput.addEventListener('keydown', (e)=>{
       if (e.key === 'Enter') adminLoginBtn.click();
     });
 
-
     // If page loads and admin was authed from previous session, refresh UI
     if (admin.authenticated) {
       refreshAdminUI();
     }
-    
-  // --- Character selection ---
-let characterPanel = document.getElementById('characterPanel');
-let characterOptions = document.getElementById('characterOptions');
-let selectedCharacter = 'player'; // Default character
 
-// Character options with textures
-const CHARACTERS = {
-  player: {
-    name: "Default",
-    color: "#fff1c1",
-    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/player.png"
-  },
-  knight: {
-    name: "Knight",
-    color: "#8B4513",
-    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/knight.png"
-  },
-  wizard: {
-    name: "Wizard",
-    color: "#4169E1",
-    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/wizard.png"
-  },
-  thief: {
-    name: "Thief",
-    color: "#228B22",
-    texture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/thief.png"
-  }
-};
-
-// Preload character textures
-const characterImages = {};
-for (const [key, char] of Object.entries(CHARACTERS)) {
-  if (char.texture) {
-    const img = new window.Image();
-    img.src = char.texture;
-    characterImages[key] = {
-      img,
-      loaded: false,
-      error: false
-    };
-    img.onload = () => { characterImages[key].loaded = true; };
-    img.onerror = () => { characterImages[key].error = true; };
-  }
-}
-
-// Create character selection UI
-function createCharacterOptions() {
-  characterOptions.innerHTML = '';
-  for (const [key, char] of Object.entries(CHARACTERS)) {
-    const charDiv = document.createElement('div');
-    charDiv.style.cssText = `
-      width: 60px; height: 60px; 
-      border: 2px solid ${selectedCharacter === key ? '#fffd7f' : '#888'};
-      border-radius: 5px; 
-      background: ${char.color};
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      text-align: center;
-      padding: 2px;
-      box-sizing: border-box;
-    `;
-    charDiv.innerHTML = `<div style="font-size: 12px; margin-bottom: 2px;">${char.name}</div>`;
-    charDiv.onclick = () => {
-      selectedCharacter = key;
-      createCharacterOptions(); // Update selection highlight
-    };
-    characterOptions.appendChild(charDiv);
-  }
-}
-
-// Toggle character panel
-function toggleCharacterPanel() {
-  if (characterPanel.style.display === 'block') {
-    characterPanel.style.display = 'none';
-  } else {
-    characterPanel.style.display = 'block';
-    createCharacterOptions();
-  }
-}
-
-// Close character panel
-document.getElementById('closeCharacterBtn').addEventListener('click', () => {
-  characterPanel.style.display = 'none';
-});
-
-// Handle character selection key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'c' || e.key === 'C') {
-    e.preventDefault();
-    toggleCharacterPanel();
-  }
-});
-
-// Update player color to selected character
-function updatePlayerColor() {
-  COLORS.player = CHARACTERS[selectedCharacter].color;
-}
-
-// Update player color on character selection
-createCharacterOptions();
-updatePlayerColor();
-
-
-
-    // End of script
+    // Load crafting data when page loads
+    loadCraftingData();
   </script>
-  <!-- Character selection panel -->
-<div id="characterPanel" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(16,16,24,0.97); color: #fff; font-family: monospace; border: 2px solid #fffd7f; border-radius: 8px; padding: 20px; z-index: 20; display: none; box-shadow: 0 8px 32px #000a; width: 300px;">
-  <h2 style="margin: 0 0 15px 0; text-align: center;">Character Selector</h2>
-  <div id="characterOptions" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;"></div>
-  <div style="margin-top: 15px; text-align: center;">
-    <button id="closeCharacterBtn" style="background: #444; color: white; border: 1px solid #666; padding: 8px 12px; border-radius: 4px; cursor: pointer;">Close</button>
-  </div>
-</div>
 </body>
 </html>
-
