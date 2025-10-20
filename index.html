@@ -600,6 +600,18 @@
           <label>Clear nearby blocks 5x5 (centered)</label>
           <button id="clear5Btn">Clear 5x5</button>
         </div>
+        
+        <!-- Add these lines to the admin panel HTML section in index.html, 
+     right before the closeAdminBtn and logoutAdminBtn: -->
+<div class="row">
+  <label>Teleport to Biome</label>
+  <button id="teleportBiomesBtn">Teleport</button>
+</div>
+<div class="row">
+  <label>Teleport to Sky Island</label>
+  <button id="teleportSkyBtn">Teleport</button>
+</div>
+
 
         <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
           <button id="closeAdminBtn">Close</button>
@@ -885,15 +897,26 @@
           // --- Greek Underworld Layers ---
           let layer = isUnderworldLayer(y);
           if (layer) {
-            let type = "air";
-            if (y === layer.y || y === layer.y + layer.height - 1 || x % 32 === 0 || x % 32 === 31) {
-              type = layer.name;
-            } else if ((x+layer.y)%30 === 0 && y > layer.y && y < layer.y + layer.height - 1) {
-              type = layer.name;
-            }
-            // Set background for this layer
+            // Set background for the layer
             setBackground(x, y, layer.bg);
-            world[key] = type;
+            
+            // Set foreground block for the layer
+            if (y === layer.y || y === layer.y + layer.height - 1) {
+              // Top and bottom layers
+              setBlock(x, y, layer.name);
+            } else {
+              // Middle layers - add some variation
+              if (x % 10 === 0 || x % 10 === 9) {
+                // Add some structure along the edges
+                setBlock(x, y, layer.name);
+              } else if (valueNoise(x + y, seed) > 0.95) {
+                // Random blocks in the middle
+                setBlock(x, y, layer.name);
+              } else {
+                // Otherwise leave air
+                setBlock(x, y, "air");
+              }
+            }
             continue;
           }
 
@@ -1144,16 +1167,7 @@
     // Create inventory instance
     const inventory = new Inventory();
 
-    // Initialize inventory with starting items
-    inventory.addItem("dirt", 0);
-    inventory.addItem("stone", 0);
-    inventory.addItem("sand", 0);
-    inventory.addItem("clay", 0);
-    inventory.addItem("snow", 0);
-    inventory.addItem("hotstone", 0);
-    inventory.addItem("wood", 0);
-    inventory.addItem("brick", 0);
-    inventory.addItem("cloud", 0);
+    
 
     function showInventory() {
       const invDiv = document.getElementById('inventoryPanel');
@@ -1374,20 +1388,20 @@
       default: {
         name: "Default",
         color: "#fff1c1",
-        idleTexture: "github.com/Skaberson/Terrandia/images/character/default/Barbarian.png",
+        idleTexture: "https://github.com/Skaberson/Terrandia/blob/main/images/character/default/Barbarian.png?raw=true",
         movingTexture: "https://raw.githubusercontent.com/Skaberson/Terrandia/main/images/character/default/Barbarianmove.gif"
       },
       warrior: {
         name: "Warrior",
         color: "#8B4513",
-        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Warrior.png",
-        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Warrior.png"
+        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/images/Warrior.png",
+        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/images/character/Warrior.png"
       },
       mage: {
         name: "Mage",
         color: "#4169E1",
-        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Mage.png",
-        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/main/images/character/Mage.png"
+        idleTexture: "https://raw.githubusercontent.com/Skaberson/test123/images/character/Mage.png",
+        movingTexture: "https://raw.githubusercontent.com/Skaberson/test123/images/character/Magemove.png"
       },
       archer: {
         name: "Archer",
@@ -2185,6 +2199,55 @@
       camera.y = player.y;
       adminMessage.textContent = "Teleported to spawn.";
     });
+    
+    // Add these after the existing teleportBtn.addEventListener in the JavaScript:
+teleportBiomesBtn.addEventListener('click', ()=>{
+  // Teleport to a random biome location
+  const biomeX = Math.floor(Math.random() * 1000) - 500; // Random x position
+  const biomeY = findGroundStartX(biomeX);
+  player.x = biomeX;
+  player.y = biomeY;
+  camera.x = player.x;
+  camera.y = player.y;
+  adminMessage.textContent = "Teleported to random biome location.";
+});
+
+t// Replace the existing teleportSkyBtn.addEventListener with this improved version:
+teleportSkyBtn.addEventListener('click', ()=>{
+  // Find a sky island near the player
+  const playerChunkX = Math.floor(player.x / CHUNK_SIZE);
+  const playerChunkY = Math.floor(player.y / CHUNK_SIZE);
+  
+  // Look for sky islands in nearby chunks
+  for (let cx = playerChunkX - 5; cx <= playerChunkX + 5; cx++) {
+    for (let cy = playerChunkY - 5; cy <= playerChunkY + 5; cy++) {
+      // Check if this chunk contains sky islands
+      for (let dx = 0; dx < CHUNK_SIZE; dx++) {
+        const x = cx * CHUNK_SIZE + dx;
+        if (valueNoise(x, 99999) > 0.985) {
+          // Found a potential sky island location
+          const skyY = -50 + Math.floor(valueNoise(x*11, seed)*8) - 3;
+          player.x = x;
+          player.y = skyY;
+          camera.x = player.x;
+          camera.y = player.y;
+          adminMessage.textContent = "Teleported to sky island!";
+          return;
+        }
+      }
+    }
+  }
+  
+  // If no sky island found nearby, teleport to a random sky island
+  const skyX = Math.floor(Math.random() * 1000) - 500;
+  const skyY = -50 + Math.floor(Math.random() * 50) - 25;
+  player.x = skyX;
+  player.y = skyY;
+  camera.x = player.x;
+  camera.y = player.y;
+  adminMessage.textContent = "Teleported to random sky island.";
+});
+
 
     clear5Btn.addEventListener('click', ()=>{
       // Clear a 5x5 centered around the player's targeted tile (mouse) or player pos if mouse outside
