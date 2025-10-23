@@ -421,6 +421,113 @@
       background: rgba(255, 0, 0, 0.3);
     }
     
+    /* Texture menu */
+    #textureMenu {
+      position: absolute; 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      background: rgba(30, 30, 40, 0.95); 
+      color: #fff; 
+      font-family: 'Courier New', monospace;
+      border: 3px solid #8B4513;
+      border-radius: 8px; 
+      width: 500px;
+      height: 500px;
+      z-index: 25; 
+      display: none;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    
+    #textureMenu h2 { 
+      margin: 0 0 15px 0; 
+      font-size: 18px; 
+      text-align: center;
+      color: #FFD700;
+      text-shadow: 0 0 4px #000;
+      border-bottom: 2px solid #8B4513;
+      padding-bottom: 5px;
+    }
+    
+    #textureOptions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      height: 400px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    
+    .texture-option {
+      background: rgba(40, 40, 50, 0.7);
+      border: 2px solid #555;
+      border-radius: 4px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .texture-option:hover {
+      border-color: #FFD700;
+      background: rgba(50, 50, 60, 0.9);
+    }
+    
+    .texture-preview {
+      width: 80px;
+      height: 80px;
+      border: 1px solid #888;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .texture-preview img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    
+    .texture-name {
+      font-weight: bold;
+      color: #FFD700;
+      text-align: center;
+    }
+    
+    .texture-description {
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+    }
+    
+    #textureMenu .close-btn {
+      position: absolute; 
+      top: 10px; 
+      right: 10px; 
+      background: none; 
+      border: none; 
+      color: #fff; 
+      cursor: pointer;
+      font-size: 16px; 
+      width: 24px; 
+      height: 24px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+    
+    #textureMenu .close-btn:hover {
+      background: rgba(255, 0, 0, 0.3);
+    }
+    
     /* Hotbar */
     #hotbar {
       position: absolute; 
@@ -489,6 +596,29 @@
       box-sizing: border-box;
     }
     
+    #keybindsMenu .close-btn {
+  position: absolute; 
+  top: 10px; 
+  right: 10px; 
+  background: none; 
+  border: none; 
+  color: #fff; 
+  cursor: pointer;
+  font-size: 16px; 
+  width: 24px; 
+  height: 24px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+#keybindsMenu .close-btn:hover {
+  background: rgba(255, 0, 0, 0.3);
+}
+
+    
     /* Small helper notes */
     .hint { 
       font-size:12px; 
@@ -512,6 +642,23 @@
     }
     
     #craftingRecipes::-webkit-scrollbar-thumb:hover {
+      background: #FFD700;
+    }
+    
+    #textureOptions::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    #textureOptions::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+    
+    #textureOptions::-webkit-scrollbar-thumb {
+      background: #8B4513;
+      border-radius: 4px;
+    }
+    
+    #textureOptions::-webkit-scrollbar-thumb:hover {
       background: #FFD700;
     }
   </style>
@@ -544,6 +691,37 @@
       <h2>Crafting</h2>
       <div id="craftingRecipes"></div>
     </div>
+    
+    <!-- Keybinds Menu -->
+<div id="keybindsMenu" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(30, 30, 40, 0.95); color: #fff; font-family: 'Courier New', monospace; border: 3px solid #8B4513; border-radius: 8px; width: 400px; height: 400px; z-index: 35; box-shadow: 0 0 20px rgba(0, 0, 0, 0.7); padding: 15px; box-sizing: border-box;">
+  <button class="close-btn" id="closeKeybinds">×</button>
+  <h2>Keybinds</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+    <div><strong>Movement:</strong></div>
+    <div>WASD or Arrow Keys</div>
+    <div><strong>Jump:</strong></div>
+    <div>Space or Up Arrow</div>
+    <div><strong>Inventory:</strong></div>
+    <div>I</div>
+    <div><strong>Crafting:</strong></div>
+    <div>C</div>
+    <div><strong>Character:</strong></div>
+    <div>X</div>
+    <div><strong>Textures:</strong></div>
+    <div>T</div>
+    <div><strong>Admin:</strong></div>
+    <div>P</div>
+    <div><strong>Keybinds:</strong></div>
+    <div>K</div>
+    <div><strong>Hotbar:</strong></div>
+    <div>1-9</div>
+    <div><strong>Place Block:</strong></div>
+    <div>Right Click</div>
+    <div><strong>Mine Block:</strong></div>
+    <div>Left Click</div>
+  </div>
+</div>
+
 
     <!-- Character Customization Panel -->
     <div id="characterPanel">
@@ -559,6 +737,13 @@
         <button class="preset-btn" data-preset="mage">Mage</button>
         <button class="preset-btn" data-preset="archer">Archer</button>
       </div>
+    </div>
+
+    <!-- Texture Menu -->
+    <div id="textureMenu">
+      <button class="close-btn" id="closeTextureMenu">✕</button>
+      <h2>Texture Packs</h2>
+      <div id="textureOptions"></div>
     </div>
 
     <!-- Admin panel -->
@@ -719,35 +904,140 @@
       hades_bg: "#111111"
     };
 
-    // --- Block images (edit these for custom textures!) ---
-    const BLOCK_IMAGES = {
-      grass: "https://raw.githubusercontent.com/Skaberson/test123/main/images/grass.png",
-      dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/images/dirt_00.png",
-      stone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/stone.png",
-      sand: "https://raw.githubusercontent.com/Skaberson/test123/main/images/newsand.png",
-      clay: "https://raw.githubusercontent.com/Skaberson/test123/main/images/clay.png",
-      snow: "https://raw.githubusercontent.com/Skaberson/test123/main/images/newsnow.png",
-      hotstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hotstone.png",
-      magma: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
-      lava: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
-      leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/images/leaves_00.png",
-      wood: "https://raw.githubusercontent.com/Skaberson/test123/main/images/wood_0.png",
-      brick: "",
-      ore: "https://raw.githubusercontent.com/Skaberson/test123/main/images/ironore.png",
-      cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
-      hellstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hellstone.png",
-      styx_temple: "",
-      elysium: "",
-      asphodel: "",
-      tartarus: "",
-      hades_house: "",
-      darkstone_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/darkstone.png",
-      styx_bg: "",
-      elysium_bg: "",
-      asphodel_bg: "",
-      tartarus_bg: "",
-      hades_bg: ""
+    // --- Texture packs ---
+    const TEXTURE_PACKS = {
+      "default": {
+        name: "Default",
+        description: "Classic Terrandia textures",
+        blocks: {
+          grass: "https://raw.githubusercontent.com/Skaberson/test123/main/images/grass.png",
+          dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/images/dirt_00.png",
+          stone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/stone.png",
+          sand: "https://raw.githubusercontent.com/Skaberson/test123/main/images/newsand.png",
+          clay: "https://raw.githubusercontent.com/Skaberson/test123/main/images/clay.png",
+          snow: "https://raw.githubusercontent.com/Skaberson/test123/main/images/newsnow.png",
+          hotstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hotstone.png",
+          magma: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          lava: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/images/leaves_00.png",
+          wood: "https://raw.githubusercontent.com/Skaberson/test123/main/images/wood_0.png",
+          brick: "",
+          ore: "https://raw.githubusercontent.com/Skaberson/test123/main/images/ironore.png",
+          cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
+          hellstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hellstone.png",
+          styx_temple: "",
+          elysium: "",
+          asphodel: "",
+          tartarus: "",
+          hades_house: "",
+          darkstone_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/darkstone.png",
+          styx_bg: "",
+          elysium_bg: "",
+          asphodel_bg: "",
+          tartarus_bg: "",
+          hades_bg: ""
+        }
+      },
+      "norse": {
+        name: "Norse Mythology",
+        description: "Mythical Norse textures",
+        blocks: {
+          grass: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/grassn.png",
+          dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/dirtn.png",
+          stone: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/stonen.png",
+          sand: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/sandn.png",
+          clay: "https://raw.githubusercontent.com/Skaberson/test123/main/images/clay.png",
+          snow: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/snown.png",
+          hotstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hotstone.png",
+          magma: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          lava: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/leafn.png",
+          wood: "https://raw.githubusercontent.com/Skaberson/test123/main/Norse/woodn.png",
+          brick: "https://raw.githubusercontent.com/Skaberson/test123/main/images/brick.png",
+          ore: "https://raw.githubusercontent.com/Skaberson/test123/main/images/ironore.png",
+          cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
+          hellstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hellstone.png",
+          styx_temple: "https://raw.githubusercontent.com/Skaberson/test123/main/images/styx_temple.png",
+          elysium: "https://raw.githubusercontent.com/Skaberson/test123/main/images/elysium.png",
+          asphodel: "https://raw.githubusercontent.com/Skaberson/test123/main/images/asphodel.png",
+          tartarus: "https://raw.githubusercontent.com/Skaberson/test123/main/images/tartarus.png",
+          hades_house: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hades_house.png",
+          darkstone_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/darkstone.png",
+          styx_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/styx_bg.png",
+          elysium_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/elysium_bg.png",
+          asphodel_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/asphodel_bg.png",
+          tartarus_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/tartarus_bg.png",
+          hades_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hades_bg.png"
+        }
+      },
+      "fantasy": {
+        name: "Realistic",
+        description: "Higher resolution textures!",
+        blocks: {
+          grass: "https://raw.githubusercontent.com/Skaberson/test123/main/32/grass.png",
+          dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/32/dirt.png",
+          stone: "https://raw.githubusercontent.com/Skaberson/test123/main/32/stone2.png",
+          sand: "https://raw.githubusercontent.com/Skaberson/test123/main/32/sand2.png",
+          clay: "https://raw.githubusercontent.com/Skaberson/test123/main/32/clay2.png",
+          snow: "https://raw.githubusercontent.com/Skaberson/test123/main/32/snow2.png",
+          hotstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hotstone.png",
+          magma: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          lava: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/images/leaves_00.png",
+          wood: "https://raw.githubusercontent.com/Skaberson/test123/main/32/wood2.png",
+          brick: "https://raw.githubusercontent.com/Skaberson/test123/main/images/brick.png",
+          ore: "https://raw.githubusercontent.com/Skaberson/test123/main/images/ironore.png",
+          cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
+          hellstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hellstone.png",
+          styx_temple: "https://raw.githubusercontent.com/Skaberson/test123/main/images/styx_temple.png",
+          elysium: "https://raw.githubusercontent.com/Skaberson/test123/main/images/elysium.png",
+          asphodel: "https://raw.githubusercontent.com/Skaberson/test123/main/images/asphodel.png",
+          tartarus: "https://raw.githubusercontent.com/Skaberson/test123/main/images/tartarus.png",
+          hades_house: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hades_house.png",
+          darkstone_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/darkstone.png",
+          styx_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/styx_bg.png",
+          elysium_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/elysium_bg.png",
+          asphodel_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/asphodel_bg.png",
+          tartarus_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/tartarus_bg.png",
+          hades_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hades_bg.png"
+        }
+      },
+      "cyberpunk": {
+        name: "8 bit",
+        description: "Relive retro!",
+        blocks: {
+          grass: "https://raw.githubusercontent.com/Skaberson/test123/main/8bit/bitgrass.png",
+          dirt: "https://raw.githubusercontent.com/Skaberson/test123/main/8bit/bitdirt.png",
+          stone: "https://raw.githubusercontent.com/Skaberson/test123/main/8bit/bitstone.png",
+          sand: "https://raw.githubusercontent.com/Skaberson/test123/main/8bit/newsand.png",
+          clay: "https://raw.githubusercontent.com/Skaberson/test123/main/images/clay.png",
+          snow: "https://raw.githubusercontent.com/Skaberson/test123/main/images/newsnow.png",
+          hotstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hotstone.png",
+          magma: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          lava: "https://raw.githubusercontent.com/Skaberson/test123/main/images/magma.png",
+          leaf: "https://raw.githubusercontent.com/Skaberson/test123/main/images/leaves_00.png",
+          wood: "https://raw.githubusercontent.com/Skaberson/test123/main/8bit/bitwood.png",
+          brick: "https://raw.githubusercontent.com/Skaberson/test123/main/images/brick.png",
+          ore: "https://raw.githubusercontent.com/Skaberson/test123/main/images/ironore.png",
+          cloud: "https://raw.githubusercontent.com/Skaberson/test123/main/images/cloud.png",
+          hellstone: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hellstone.png",
+          styx_temple: "https://raw.githubusercontent.com/Skaberson/test123/main/images/styx_temple.png",
+          elysium: "https://raw.githubusercontent.com/Skaberson/test123/main/images/elysium.png",
+          asphodel: "https://raw.githubusercontent.com/Skaberson/test123/main/images/asphodel.png",
+          tartarus: "https://raw.githubusercontent.com/Skaberson/test123/main/images/tartarus.png",
+          hades_house: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hades_house.png",
+          darkstone_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/darkstone.png",
+          styx_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/styx_bg.png",
+          elysium_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/elysium_bg.png",
+          asphodel_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/asphodel_bg.png",
+          tartarus_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/tartarus_bg.png",
+          hades_bg: "https://raw.githubusercontent.com/Skaberson/test123/main/images/hades_bg.png"
+        }
+      }
     };
+
+    // --- Block images (edit these for custom textures!) ---
+    let BLOCK_IMAGES = TEXTURE_PACKS.default.blocks;
 
     // --- Hotbar blocks (no unminable backgrounds) ---
     const HOTBAR_BLOCKS = [
@@ -1168,7 +1458,6 @@
     const inventory = new Inventory();
 
     
-
     function showInventory() {
       const invDiv = document.getElementById('inventoryPanel');
       invDiv.style.display = "block";
@@ -1374,6 +1663,37 @@
         }, 3000);
       }
     }
+    
+    // Add this to your existing JavaScript
+const keybindsMenu = document.getElementById('keybindsMenu');
+const closeKeybinds = document.getElementById('closeKeybinds');
+
+function showKeybindsMenu() {
+  keybindsMenu.style.display = "block";
+}
+
+function hideKeybindsMenu() {
+  keybindsMenu.style.display = "none";
+}
+
+function toggleKeybindsMenu() {
+  if (keybindsMenu.style.display === "block") {
+    hideKeybindsMenu();
+  } else {
+    showKeybindsMenu();
+  }
+}
+
+// Add event listener for the 'K' key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'k' || e.key === 'K') {
+    toggleKeybindsMenu();
+  }
+});
+
+// Close button event listener
+closeKeybinds.addEventListener('click', hideKeybindsMenu);
+
 
     function showCrafting() {
       document.getElementById('craftingPanel').style.display = "block";
@@ -1734,6 +2054,10 @@
       if(e.key==='x' || e.key==='X') {
         showCharacterPanel();
       }
+      // Texture menu toggle (press T)
+      if(e.key==='t' || e.key==='T') {
+        toggleTextureMenu();
+      }
       // Admin panel toggle (press P)
       if(e.key==='p' || e.key==='P') {
         toggleAdminPanel();
@@ -2082,6 +2406,122 @@
     });
 
     // ----------------
+    // Texture Menu Controls
+    // ----------------
+    const textureMenu = document.getElementById('textureMenu');
+    const closeTextureMenu = document.getElementById('closeTextureMenu');
+    const textureOptions = document.getElementById('textureOptions');
+
+    // Create texture options
+    function createTextureOptions() {
+      textureOptions.innerHTML = '';
+      
+      for (const [packId, pack] of Object.entries(TEXTURE_PACKS)) {
+        const option = document.createElement('div');
+        option.className = 'texture-option';
+        option.dataset.pack = packId;
+        
+        // Create preview
+        const preview = document.createElement('div');
+        preview.className = 'texture-preview';
+        
+        // Use first available texture for preview
+        let previewImage = null;
+        for (const [blockType, url] of Object.entries(pack.blocks)) {
+          if (url) {
+            previewImage = url;
+            break;
+          }
+        }
+        
+        if (previewImage) {
+          const img = document.createElement('img');
+          img.src = previewImage;
+          preview.appendChild(img);
+        } else {
+          preview.textContent = 'No preview';
+        }
+        
+        // Create info
+        const info = document.createElement('div');
+        info.className = 'texture-info';
+        
+        const name = document.createElement('div');
+        name.className = 'texture-name';
+        name.textContent = pack.name;
+        
+        const desc = document.createElement('div');
+        desc.className = 'texture-description';
+        desc.textContent = pack.description;
+        
+        info.appendChild(name);
+        info.appendChild(desc);
+        
+        option.appendChild(preview);
+        option.appendChild(info);
+        
+        option.addEventListener('click', () => {
+          applyTexturePack(packId);
+        });
+        
+        textureOptions.appendChild(option);
+      }
+    }
+
+    function showTextureMenu() {
+      textureMenu.style.display = "block";
+    }
+    
+    function hideTextureMenu() {
+      textureMenu.style.display = "none";
+    }
+    
+    function toggleTextureMenu() {
+      if (textureMenu.style.display === "block") {
+        hideTextureMenu();
+      } else {
+        showTextureMenu();
+      }
+    }
+
+    function applyTexturePack(packId) {
+      if (TEXTURE_PACKS[packId]) {
+        BLOCK_IMAGES = TEXTURE_PACKS[packId].blocks;
+        
+        // Reload images
+        for (const [type, url] of Object.entries(BLOCK_IMAGES)) {
+          if (url) {
+            const img = new window.Image();
+            img.src = url;
+            imageCache[type] = {
+              img,
+              loaded: false,
+              error: false
+            };
+            img.onload = () => { imageCache[type].loaded = true; };
+            img.onerror = () => { imageCache[type].error = true; };
+          }
+        }
+        
+        // Show success message
+        const message = document.getElementById('adminMessage');
+        if (message) {
+          message.textContent = `Texture pack "${TEXTURE_PACKS[packId].name}" applied!`;
+          setTimeout(() => {
+            if (message.textContent.includes("Texture pack")) {
+              message.textContent = "";
+            }
+          }, 3000);
+        }
+      }
+    }
+
+    closeTextureMenu.addEventListener('click', hideTextureMenu);
+
+    // Initialize texture options
+    createTextureOptions();
+
+    // ----------------
     // Character Panel Controls
     // ----------------
     document.getElementById('closeCharacter').addEventListener('click', hideCharacterPanel);
@@ -2201,53 +2641,52 @@
     });
     
     // Add these after the existing teleportBtn.addEventListener in the JavaScript:
-teleportBiomesBtn.addEventListener('click', ()=>{
-  // Teleport to a random biome location
-  const biomeX = Math.floor(Math.random() * 1000) - 500; // Random x position
-  const biomeY = findGroundStartX(biomeX);
-  player.x = biomeX;
-  player.y = biomeY;
-  camera.x = player.x;
-  camera.y = player.y;
-  adminMessage.textContent = "Teleported to random biome location.";
-});
+    teleportBiomesBtn.addEventListener('click', ()=>{
+      // Teleport to a random biome location
+      const biomeX = Math.floor(Math.random() * 1000) - 500; // Random x position
+      const biomeY = findGroundStartX(biomeX);
+      player.x = biomeX;
+      player.y = biomeY;
+      camera.x = player.x;
+      camera.y = player.y;
+      adminMessage.textContent = "Teleported to random biome location.";
+    });
 
-t// Replace the existing teleportSkyBtn.addEventListener with this improved version:
-teleportSkyBtn.addEventListener('click', ()=>{
-  // Find a sky island near the player
-  const playerChunkX = Math.floor(player.x / CHUNK_SIZE);
-  const playerChunkY = Math.floor(player.y / CHUNK_SIZE);
-  
-  // Look for sky islands in nearby chunks
-  for (let cx = playerChunkX - 5; cx <= playerChunkX + 5; cx++) {
-    for (let cy = playerChunkY - 5; cy <= playerChunkY + 5; cy++) {
-      // Check if this chunk contains sky islands
-      for (let dx = 0; dx < CHUNK_SIZE; dx++) {
-        const x = cx * CHUNK_SIZE + dx;
-        if (valueNoise(x, 99999) > 0.985) {
-          // Found a potential sky island location
-          const skyY = -50 + Math.floor(valueNoise(x*11, seed)*8) - 3;
-          player.x = x;
-          player.y = skyY;
-          camera.x = player.x;
-          camera.y = player.y;
-          adminMessage.textContent = "Teleported to sky island!";
-          return;
+    // Replace the existing teleportSkyBtn.addEventListener with this improved version:
+    teleportSkyBtn.addEventListener('click', ()=>{
+      // Find a sky island near the player
+      const playerChunkX = Math.floor(player.x / CHUNK_SIZE);
+      const playerChunkY = Math.floor(player.y / CHUNK_SIZE);
+      
+      // Look for sky islands in nearby chunks
+      for (let cx = playerChunkX - 5; cx <= playerChunkX + 5; cx++) {
+        for (let cy = playerChunkY - 5; cy <= playerChunkY + 5; cy++) {
+          // Check if this chunk contains sky islands
+          for (let dx = 0; dx < CHUNK_SIZE; dx++) {
+            const x = cx * CHUNK_SIZE + dx;
+            if (valueNoise(x, 99999) > 0.985) {
+              // Found a potential sky island location
+              const skyY = -50 + Math.floor(valueNoise(x*11, seed)*8) - 3;
+              player.x = x;
+              player.y = skyY;
+              camera.x = player.x;
+              camera.y = player.y;
+              adminMessage.textContent = "Teleported to sky island!";
+              return;
+            }
+          }
         }
       }
-    }
-  }
-  
-  // If no sky island found nearby, teleport to a random sky island
-  const skyX = Math.floor(Math.random() * 1000) - 500;
-  const skyY = -50 + Math.floor(Math.random() * 50) - 25;
-  player.x = skyX;
-  player.y = skyY;
-  camera.x = player.x;
-  camera.y = player.y;
-  adminMessage.textContent = "Teleported to random sky island.";
-});
-
+      
+      // If no sky island found nearby, teleport to a random sky island
+      const skyX = Math.floor(Math.random() * 1000) - 500;
+      const skyY = -50 + Math.floor(Math.random() * 50) - 25;
+      player.x = skyX;
+      player.y = skyY;
+      camera.x = player.x;
+      camera.y = player.y;
+      adminMessage.textContent = "Teleported to random sky island.";
+    });
 
     clear5Btn.addEventListener('click', ()=>{
       // Clear a 5x5 centered around the player's targeted tile (mouse) or player pos if mouse outside
@@ -2294,4 +2733,3 @@ teleportSkyBtn.addEventListener('click', ()=>{
   </script>
 </body>
 </html>
-
