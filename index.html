@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Webpage</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('https://Skaberson.github.io/Terrandia/images/titlescreen.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex; /* Use flexbox to center the main content */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            position: relative; /* Needed for positioning absolute/fixed children relative to body */
+        }
+
+        /* Styles for the main button in the center */
+        .main-button-container {
+            /* This container will be centered by the body's flex properties */
+            text-align: center; /* Ensure button text is centered */
+        }
+
+        .main-button {
+            display: inline-block;
+            padding: 25px 50px; /* Larger padding for a main button */
+            font-size: 24px; /* Larger font size */
+            font-weight: bold;
+            left: 15px;
+            color: white;
+            background-color: #dc3545; /* A distinct color for the main button (e.g., red) */
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .main-button:hover {
+            background-color: #c82333; /* Darker red on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+
+        /* Styles for the smaller buttons in the bottom-left */
+        .bottom-left-buttons {
+            position: fixed; /* Position relative to the viewport */
+            bottom: 20px; /* 20px from the bottom */
+            left: 20px; /* 20px from the left */
+            display: flex; /* Use flexbox to arrange small buttons */
+            flex-direction: row; /* Arrange horizontally */
+            gap: 15px; /* Space between smaller buttons */
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent dark background */
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .small-button {
+            display: inline-block;
+            padding: 10px 20px; /* Smaller padding */
+            font-size: 16px; /* Smaller font size */
+            color: white;
+            background-color: #6c757d; /* A subtle color for smaller buttons (e.g., grey) */
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .small-button:hover {
+            background-color: #5a6268; /* Darker grey on hover */
+        }
+    </style>
+</head>
+<body>
+    <!-- Main button in the center -->
+    <div class="main-button-container">
+        <a href="https://Skaberson.github.io/Terrandia/firstversion.html" class="main-button">Play</a>
+    </div>
+
+
+    <!-- Smaller buttons in the bottom-left -->
+    <div class="bottom-left-buttons">
+        <a href="https://Skaberson.github.io/Terrandia/morevers.html" class="small-button">Other versions</a>
+        <a href="https://github.com/Skaberson/Terrandia/Changelog" class="small-button">Changelog</a>
+    </div>
+</body>
+</html>
